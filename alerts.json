@@ -1,0 +1,13 @@
+[
+  {
+    "id": "alert-1766211274980-k8ms7m",
+    "phone": "+14156836861",
+    "name": "Philz Winter Bliss",
+    "url": "https://philzcoffee.com",
+    "goal": "Check philzcoffee.com",
+    "cronExpression": "0 8 * * *",
+    "nextRun": "2025-12-20T16:00:00.980Z",
+    "enabled": true,
+    "createdAt": "2025-12-20T06:14:34.981Z"
+  }
+]

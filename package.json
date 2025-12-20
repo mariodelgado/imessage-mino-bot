@@ -7,7 +7,9 @@
     "dev": "tsx --env-file=.env --watch index.ts"
   },
   "dependencies": {
+    "@google-cloud/vertexai": "^1.9.1",
     "@google/generative-ai": "^0.21.0",
+    "@photon-ai/advanced-imessage-kit": "^1.6.1",
     "@photon-ai/imessage-kit": "^1.0.0",
     "better-sqlite3": "^12.5.0",
     "tsx": "^4.21.0"
