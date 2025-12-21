@@ -20,8 +20,10 @@ export interface ScheduledAlert {
   nextRun: Date;
   lastRun?: Date;
   lastResult?: string;
+  lastResultHash?: string;  // For change detection
   enabled: boolean;
   createdAt: Date;
+  notifyOnChangeOnly?: boolean;  // Only alert when data changes
 }
 
 // Pending alert setup (user is in the middle of creating one)
@@ -39,6 +41,44 @@ const ALERTS_FILE = path.join(process.cwd(), "alerts.json");
 const alerts: Map<string, ScheduledAlert> = new Map();
 const pendingSetups: Map<string, PendingAlertSetup> = new Map();
 const runningTimers: Map<string, NodeJS.Timeout> = new Map();
+
+// Simple hash for change detection
+function hashResult(result: string): string {
+  let hash = 0;
+  for (let i = 0; i < result.length; i++) {
+    const chr = result.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return hash.toString(16);
+}
+
+// Check if result changed
+export function hasResultChanged(alert: ScheduledAlert, newResult: string): boolean {
+  const newHash = hashResult(newResult);
+  const changed = alert.lastResultHash !== newHash;
+  return changed;
+}
+
+// Get alerts that share the same run time for morning brief aggregation
+export function getAlertsDueAt(phone: string, targetTime: Date): ScheduledAlert[] {
+  const targetHour = targetTime.getHours();
+  const targetMinute = targetTime.getMinutes();
+
+  return getUserAlerts(phone).filter(alert => {
+    if (!alert.enabled) return false;
+    const alertHour = alert.nextRun.getHours();
+    const alertMinute = alert.nextRun.getMinutes();
+    return alertHour === targetHour && alertMinute === targetMinute;
+  });
+}
+
+// Check if alert should be aggregated into morning brief
+export function shouldAggregate(alert: ScheduledAlert): boolean {
+  const hour = alert.nextRun.getHours();
+  // Morning brief: aggregate all alerts between 6am-10am
+  return hour >= 6 && hour < 10;
+}
 
 // Load alerts from file
 export function loadAlerts(): void {
@@ -239,15 +279,21 @@ export function toggleAlert(id: string): boolean | null {
   return alert.enabled;
 }
 
-// Update alert after run
-export function updateAlertAfterRun(id: string, result: string): void {
+// Update alert after run (returns true if changed)
+export function updateAlertAfterRun(id: string, result: string): { changed: boolean; alert: ScheduledAlert | null } {
   const alert = alerts.get(id);
-  if (!alert) return;
+  if (!alert) return { changed: false, alert: null };
+
+  const newHash = hashResult(result);
+  const changed = alert.lastResultHash !== newHash;
 
   alert.lastRun = new Date();
   alert.lastResult = result;
+  alert.lastResultHash = newHash;
   alert.nextRun = getNextRunTime(alert.cronExpression);
   saveAlerts();
+
+  return { changed, alert };
 }
 
 // Pending setup management
@@ -300,9 +346,17 @@ Just tell me when!`;
 
 // Scheduler runner - to be called from index.ts
 let schedulerCallback: ((alert: ScheduledAlert) => Promise<void>) | null = null;
+let morningBriefCallback: ((phone: string, alerts: ScheduledAlert[]) => Promise<void>) | null = null;
+
+// Track which phones have had their morning brief sent today
+const morningBriefsSent = new Map<string, string>();  // phone -> date string
 
 export function setSchedulerCallback(callback: (alert: ScheduledAlert) => Promise<void>): void {
   schedulerCallback = callback;
+}
+
+export function setMorningBriefCallback(callback: (phone: string, alerts: ScheduledAlert[]) => Promise<void>): void {
+  morningBriefCallback = callback;
 }
 
 export function startScheduler(): void {
@@ -311,9 +365,48 @@ export function startScheduler(): void {
   // Check every minute for alerts to run
   setInterval(async () => {
     const now = new Date();
+    const today = now.toDateString();
+    const hour = now.getHours();
 
+    // Group morning alerts by phone for morning brief (6am-10am)
+    if (hour >= 6 && hour < 10 && morningBriefCallback) {
+      const morningAlerts = getEnabledAlerts().filter(a => {
+        const alertHour = a.nextRun.getHours();
+        return alertHour >= 6 && alertHour < 10 && a.nextRun <= now;
+      });
+
+      // Group by phone
+      const byPhone = new Map<string, ScheduledAlert[]>();
+      for (const alert of morningAlerts) {
+        const existing = byPhone.get(alert.phone) || [];
+        existing.push(alert);
+        byPhone.set(alert.phone, existing);
+      }
+
+      // Send morning briefs (one per phone per day)
+      for (const [phone, alerts] of byPhone) {
+        const lastBrief = morningBriefsSent.get(phone);
+        if (lastBrief !== today && alerts.length > 0) {
+          morningBriefsSent.set(phone, today);
+          console.log(`☀️ Sending morning brief to ${phone} (${alerts.length} alerts)`);
+
+          try {
+            await morningBriefCallback(phone, alerts);
+          } catch (err) {
+            console.error(`Morning brief failed for ${phone}:`, err);
+          }
+        }
+      }
+    }
+
+    // Run individual alerts (non-morning or if no morning brief callback)
     for (const alert of getEnabledAlerts()) {
       if (alert.nextRun <= now && schedulerCallback) {
+        // Skip morning alerts if we're doing morning briefs
+        if (morningBriefCallback && shouldAggregate(alert)) {
+          continue;  // Already handled by morning brief
+        }
+
         console.log(`⏰ Running scheduled alert: ${alert.name}`);
 
         try {
@@ -331,6 +424,7 @@ export function startScheduler(): void {
 export default {
   loadAlerts,
   createAlert,
+  setMorningBriefCallback,
   getUserAlerts,
   getEnabledAlerts,
   deleteAlert,

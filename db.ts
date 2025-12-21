@@ -18,6 +18,10 @@ db.exec(`
     name TEXT,
     mino_api_key TEXT,
     mino_state TEXT,
+    mino_code_verifier TEXT,
+    mino_access_token TEXT,
+    mino_refresh_token TEXT,
+    mino_token_expires_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     last_message_at TEXT
   );
@@ -42,6 +46,10 @@ export interface User {
   name: string | null;
   mino_api_key: string | null;
   mino_state: string | null;
+  mino_code_verifier: string | null;
+  mino_access_token: string | null;
+  mino_refresh_token: string | null;
+  mino_token_expires_at: string | null;
   created_at: string;
   last_message_at: string | null;
 }
@@ -67,6 +75,12 @@ export function getOrCreateUser(phone: string): User {
     id: result.lastInsertRowid as number,
     phone,
     name: null,
+    mino_api_key: null,
+    mino_state: null,
+    mino_code_verifier: null,
+    mino_access_token: null,
+    mino_refresh_token: null,
+    mino_token_expires_at: null,
     created_at: new Date().toISOString(),
     last_message_at: null,
   };
@@ -142,6 +156,90 @@ export function getMinoApiKey(phone: string): string | null {
 // Clear Mino state after OAuth completes
 export function clearMinoState(phone: string): void {
   db.prepare("UPDATE users SET mino_state = NULL WHERE phone = ?").run(phone);
+}
+
+// Store PKCE code verifier for OAuth flow
+export function setMinoCodeVerifier(phone: string, codeVerifier: string): void {
+  db.prepare("UPDATE users SET mino_code_verifier = ? WHERE phone = ?").run(codeVerifier, phone);
+}
+
+// Get PKCE code verifier
+export function getMinoCodeVerifier(phone: string): string | null {
+  const user = getUserByPhone(phone);
+  return user?.mino_code_verifier || null;
+}
+
+// Store OAuth tokens after successful authentication
+export function setMinoTokens(
+  phone: string,
+  accessToken: string,
+  refreshToken: string | null,
+  expiresIn: number // seconds until expiry
+): void {
+  const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+  db.prepare(`
+    UPDATE users SET
+      mino_access_token = ?,
+      mino_refresh_token = ?,
+      mino_token_expires_at = ?,
+      mino_state = NULL,
+      mino_code_verifier = NULL
+    WHERE phone = ?
+  `).run(accessToken, refreshToken, expiresAt, phone);
+}
+
+// Get current access token (checks expiry)
+export function getMinoAccessToken(phone: string): string | null {
+  const user = getUserByPhone(phone);
+  if (!user?.mino_access_token) return null;
+
+  // Check if token is expired (with 5 min buffer)
+  if (user.mino_token_expires_at) {
+    const expiresAt = new Date(user.mino_token_expires_at);
+    const bufferMs = 5 * 60 * 1000; // 5 minutes
+    if (expiresAt.getTime() - bufferMs < Date.now()) {
+      return null; // Token expired or about to expire
+    }
+  }
+
+  return user.mino_access_token;
+}
+
+// Get refresh token for token refresh flow
+export function getMinoRefreshToken(phone: string): string | null {
+  const user = getUserByPhone(phone);
+  return user?.mino_refresh_token || null;
+}
+
+// Check if user needs to re-authenticate
+export function needsMinoReauth(phone: string): boolean {
+  const user = getUserByPhone(phone);
+  if (!user) return true;
+
+  // Has valid access token?
+  if (getMinoAccessToken(phone)) return false;
+
+  // Has refresh token we can use?
+  if (user.mino_refresh_token) return false;
+
+  // Has legacy API key?
+  if (user.mino_api_key) return false;
+
+  return true;
+}
+
+// Clear all Mino auth data (for logout)
+export function clearMinoAuth(phone: string): void {
+  db.prepare(`
+    UPDATE users SET
+      mino_api_key = NULL,
+      mino_state = NULL,
+      mino_code_verifier = NULL,
+      mino_access_token = NULL,
+      mino_refresh_token = NULL,
+      mino_token_expires_at = NULL
+    WHERE phone = ?
+  `).run(phone);
 }
 
 export { db };

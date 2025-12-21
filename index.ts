@@ -8,12 +8,14 @@
 
 import { IMessageSDK, type Message } from "@photon-ai/imessage-kit";
 import { runMinoAutomation, type MinoResult, type ProgressCallback } from "./mino";
-import { initGemini, chat, clearHistory, addMinoResultToHistory, toggleDebug, setLastMinoResult, getLastMinoResult, type ChatResult } from "./gemini";
+import { initGemini, chat, clearHistory, addMinoResultToHistory, toggleDebug, setLastMinoResult, getLastMinoResult, checkGuardrails, type ChatResult } from "./gemini";
 import { initImageGen, generateDataCard } from "./image-gen";
 import ios from "./ios-features";
-import scheduler, { type ScheduledAlert } from "./scheduler";
-import { getOrCreateUser, storeMessage, updateUserName, setMinoState, getMinoApiKey } from "./db";
-import { startOAuthServer, generateMinoOAuthUrl, generateState, setMinoConnectedCallback } from "./oauth-server";
+import scheduler, { type ScheduledAlert, hasResultChanged } from "./scheduler";
+import { getOrCreateUser, storeMessage, updateUserName, setMinoState, getMinoApiKey, getMinoAccessToken, getMinoRefreshToken, needsMinoReauth } from "./db";
+import { startOAuthServer, generateMinoOAuthUrl, generateState, setMinoConnectedCallback, refreshAccessToken } from "./oauth-server";
+import userModel from "./user-model";
+import security from "./security";
 
 // Load environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -60,6 +62,8 @@ Commands:
 /remind 5m [msg] - Quick reminder
 /home [scene] - HomeKit scene
 /connect - Link Mino account
+/disconnect - Unlink Mino account
+/status - Check your connection
 /clear - Reset chat
 /help - This menu`;
 
@@ -185,6 +189,20 @@ function formatObject(obj: any): string {
   }).filter(Boolean).join("\n\n");
 }
 
+// Error boundary wrapper for async functions
+async function withErrorBoundary<T>(
+  fn: () => Promise<T>,
+  context: string,
+  fallback?: T
+): Promise<T | undefined> {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error(`❌ Error in ${context}:`, error);
+    return fallback;
+  }
+}
+
 // Process incoming messages
 async function handleMessage(message: Message) {
   const text = message.text?.trim();
@@ -200,9 +218,45 @@ async function handleMessage(message: Message) {
 
   console.log(`📨 From ${sender}: ${text}`);
 
-  // Ensure user exists
+  // Security: Check lockout status
+  const lockout = security.isLockedOut(sender);
+  if (lockout.locked) {
+    console.log(`🔒 User ${sender} is locked out`);
+    const mins = Math.ceil((lockout.unlockIn || 0) / 60000);
+    await iMessage.send(sender, `⚠️ Too many failed attempts. Try again in ${mins} minutes.`);
+    return;
+  }
+
+  // Security: Rate limiting
+  const rateLimit = security.checkRateLimit(sender);
+  if (!rateLimit.allowed) {
+    console.log(`⚡ Rate limit exceeded for ${sender}`);
+    const secs = Math.ceil(rateLimit.resetIn / 1000);
+    await iMessage.send(sender, `⏳ Slow down! Try again in ${secs} seconds.`);
+    return;
+  }
+
+  // Security: Sanitize input
+  const sanitizedText = security.sanitizeInput(text);
+
+  // Security: Check for suspicious patterns
+  if (security.detectSuspiciousInput(sanitizedText, sender)) {
+    console.log(`🚨 Suspicious input detected from ${sender}`);
+    // Don't reveal detection, just ignore
+  }
+
+  // Ensure user exists and track interaction
   const user = getOrCreateUser(sender);
-  storeMessage(sender, "user", text);
+  storeMessage(sender, "user", sanitizedText);
+  userModel.trackInteraction(sender, sanitizedText);
+
+  // Check guardrails early
+  const guardrail = checkGuardrails(sanitizedText);
+  if (guardrail.blocked) {
+    console.log(`🛡️ Guardrail blocked: ${guardrail.reason}`);
+    await iMessage.send(sender, guardrail.response || "I can't help with that.");
+    return;
+  }
 
   let response: ChatResult;
 
@@ -220,6 +274,30 @@ async function handleMessage(message: Message) {
       setMinoState(sender, state);
       const oauthUrl = generateMinoOAuthUrl(sender, state);
       await iMessage.send(sender, `🔗 Connect your Mino account:\n${oauthUrl}`);
+      return;
+    } else if (text.toLowerCase() === "/disconnect") {
+      // Import clearMinoAuth if not already
+      const { clearMinoAuth } = await import("./db");
+      clearMinoAuth(sender);
+      security.logSecurityEvent(sender, "token_revoked", { reason: "user_disconnect" }, "info");
+      await iMessage.send(sender, `✅ Mino account disconnected. Use /connect to link again.`);
+      return;
+    } else if (text.toLowerCase() === "/status") {
+      const hasToken = await getValidMinoToken(sender);
+      const profile = userModel.getOrCreateProfile(sender);
+      const sessions = security.getActiveSessions(sender);
+
+      let status = `📊 **Your Status**\n\n`;
+      status += `👤 Name: ${profile.name || "Not set"}\n`;
+      status += `🔗 Mino: ${hasToken ? "✅ Connected" : "❌ Not connected"}\n`;
+      status += `💬 Messages: ${profile.totalMessages}\n`;
+      status += `📅 Sessions: ${profile.totalSessions}\n`;
+
+      if (sessions.length > 0) {
+        status += `\n🔐 Active sessions: ${sessions.length}`;
+      }
+
+      await iMessage.send(sender, status);
       return;
     } else if (text.toLowerCase() === "/debug") {
       const enabled = toggleDebug(sender);
@@ -329,7 +407,65 @@ async function handleMessage(message: Message) {
       await iMessage.send(sender, response.debugLog);
     }
 
-    // Handle Mino request
+    // Handle different action types
+    switch (response.action) {
+      case "mino":
+        if (response.minoRequest) {
+          await handleMinoRequest(response.minoRequest, sender);
+          return;
+        }
+        break;
+
+      case "voice":
+        if (response.voiceRequest) {
+          await iMessage.send(sender, "🎙️ Recording...");
+          try {
+            const audioPath = await ios.generateVoiceMessage(response.voiceRequest.text);
+            await iMessage.sendFile(sender, audioPath);
+            console.log(`🎙️ Sent voice message`);
+          } catch (err) {
+            await iMessage.send(sender, "❌ Voice generation failed");
+          }
+          return;
+        }
+        break;
+
+      case "remind":
+        if (response.remindRequest) {
+          const { delay, message: remindMsg } = response.remindRequest;
+          const match = delay.match(/(\d+)(m|h|d)/i);
+          if (match) {
+            const [, amount, unit] = match;
+            const multipliers: Record<string, number> = { m: 60000, h: 3600000, d: 86400000 };
+            const delayMs = parseInt(amount) * multipliers[unit.toLowerCase()];
+            const sendAt = new Date(Date.now() + delayMs);
+
+            ios.scheduleMessage(sender, remindMsg, sendAt);
+            await iMessage.send(sender, `⏰ Reminder set for ${sendAt.toLocaleTimeString()}: "${remindMsg}"`);
+
+            setTimeout(async () => {
+              await iMessage.send(sender, `⏰ Reminder: ${remindMsg}`);
+            }, delayMs);
+          }
+          return;
+        }
+        break;
+
+      case "homekit":
+        if (response.homekitRequest) {
+          const link = ios.generateHomeKitLink(response.homekitRequest.scene);
+          await iMessage.send(sender, `🏠 Triggering "${response.homekitRequest.scene}":\n${link}`);
+          return;
+        }
+        break;
+
+      case "alert":
+        // Let the natural alert detection handle this
+        // (Already handled earlier in the message flow)
+        break;
+    }
+
+    // Fallback: Handle Mino request without action type (backwards compat)
     if (response.minoRequest) {
       await handleMinoRequest(response.minoRequest, sender);
       return;
@@ -348,14 +484,45 @@ async function handleMessage(message: Message) {
   }
 }
 
+// Get valid Mino API key/token for a user, refreshing if needed
+async function getValidMinoToken(phone: string): Promise<string | null> {
+  // First check for OAuth access token
+  let accessToken = getMinoAccessToken(phone);
+  if (accessToken) {
+    return accessToken;
+  }
+
+  // Try to refresh if we have a refresh token
+  const refreshToken = getMinoRefreshToken(phone);
+  if (refreshToken) {
+    console.log(`[Auth] Attempting token refresh for ${phone}`);
+    accessToken = await refreshAccessToken(phone);
+    if (accessToken) {
+      return accessToken;
+    }
+  }
+
+  // Fall back to legacy API key
+  const legacyKey = getMinoApiKey(phone);
+  if (legacyKey) {
+    return legacyKey;
+  }
+
+  // Fall back to global API key
+  if (MINO_API_KEY) {
+    return MINO_API_KEY;
+  }
+
+  return null;
+}
+
 // Handle Mino browser automation
 async function handleMinoRequest(request: { url: string; goal: string }, sender: string) {
-  const userMinoKey = getMinoApiKey(sender);
-  const apiKey = userMinoKey || MINO_API_KEY;
+  // Get valid token (with automatic refresh)
+  const apiKey = await getValidMinoToken(sender);
 
   if (!apiKey) {
     const state = generateState();
-    setMinoState(sender, state);
     const oauthUrl = generateMinoOAuthUrl(sender, state);
     await iMessage.send(sender, `🔗 Connect Mino first:\n${oauthUrl}`);
     return;
@@ -364,29 +531,67 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
   let url = request.url;
   if (!url.startsWith("http")) url = `https://${url}`;
 
+  // Security: Validate URL is safe to browse
+  const urlCheck = security.isUrlSafe(url);
+  if (!urlCheck.safe) {
+    console.log(`🚫 Blocked unsafe URL: ${url} - ${urlCheck.reason}`);
+    await iMessage.send(sender, `⚠️ I can't browse that URL: ${urlCheck.reason}`);
+    return;
+  }
+
+  // Security: Mino-specific rate limit
+  const minoLimit = security.checkMinoRateLimit(sender);
+  if (!minoLimit.allowed) {
+    const secs = Math.ceil(minoLimit.resetIn / 1000);
+    await iMessage.send(sender, `⏳ Too many web requests. Try again in ${secs} seconds.`);
+    return;
+  }
+
   const domain = new URL(url).hostname.replace("www.", "");
   console.log(`🌐 Mino: ${url} - ${request.goal}`);
-  await iMessage.send(sender, `🌐 Checking ${domain}...`);
+
+  // Better instant feedback based on what we're doing
+  const friendlyGoal = request.goal.length > 40
+    ? request.goal.slice(0, 40) + "..."
+    : request.goal;
+  await iMessage.send(sender, `🌐 Browsing ${domain}...\n📋 Looking for: ${friendlyGoal}\n\n⏱️ This usually takes ~30 seconds`);
 
   // Track when we last sent a progress update
   let lastUpdate = Date.now();
-  const MIN_UPDATE_INTERVAL = 30000; // 30 seconds
+  const MIN_UPDATE_INTERVAL = 20000; // 20 seconds
+  let updateCount = 0;
+
+  const progressMessages = [
+    "Loading page...",
+    "Navigating content...",
+    "Extracting data...",
+    "Almost there...",
+  ];
 
   // Progress callback to update user
   const onProgress: ProgressCallback = async (message) => {
     const now = Date.now();
     if (now - lastUpdate >= MIN_UPDATE_INTERVAL) {
       lastUpdate = now;
+      updateCount++;
+      const progressMsg = progressMessages[Math.min(updateCount - 1, progressMessages.length - 1)];
       try {
-        await iMessage.send(sender, `⏳ Still working... ${message}`);
+        await iMessage.send(sender, `⏳ ${progressMsg}`);
       } catch (err) {
         console.error("Failed to send progress:", err);
       }
     }
   };
 
-  const result = await runMinoAutomation(apiKey, url, request.goal, onProgress);
-  console.log(`📦 Mino raw result:`, JSON.stringify(result, null, 2));
+  let result;
+  try {
+    result = await runMinoAutomation(apiKey, url, request.goal, onProgress);
+    console.log(`📦 Mino raw result:`, JSON.stringify(result, null, 2));
+  } catch (err) {
+    console.error("Mino automation failed:", err);
+    await iMessage.send(sender, `❌ Couldn't access ${domain}. The site might be down or blocking automation. Try again later?`);
+    return;
+  }
 
   // Format and store result
   const { text, data } = formatMinoForIMessage(result, url, request.goal);
@@ -395,13 +600,21 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
   if (data) {
     setLastMinoResult(sender, url, request.goal, data);
 
-    // Smart iOS feature detection based on data
-    await sendSmartIOSFeatures(sender, data, request.goal, url);
+    // Smart iOS feature detection based on data (with error boundary)
+    await withErrorBoundary(
+      () => sendSmartIOSFeatures(sender, data, request.goal, url),
+      "sendSmartIOSFeatures"
+    );
   }
 
   addMinoResultToHistory(sender, text);
 
   // Split long messages (iMessage works better with shorter messages)
+  // Auto-voice for very long responses (500+ chars) for established users
+  const profile = userModel.getOrCreateProfile(sender);
+  const VOICE_THRESHOLD = 500;
+  const shouldAutoVoice = text.length > VOICE_THRESHOLD && profile.totalMessages > 10;
+
   const MAX_MSG_LENGTH = 800;
   if (text.length > MAX_MSG_LENGTH) {
     const chunks = splitMessage(text, MAX_MSG_LENGTH);
@@ -414,8 +627,39 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
     await iMessage.send(sender, text);
   }
 
+  // Send voice version for long content
+  if (shouldAutoVoice) {
+    try {
+      // Create a conversational voice summary
+      const voiceText = `Here's what I found: ${text.slice(0, 300).replace(/[*#_`]/g, "")}. That's the quick summary.`;
+      const voicePath = await ios.generateVoiceMessage(voiceText);
+      await iMessage.sendFile(sender, voicePath);
+      console.log(`🎙️ Auto-sent voice summary`);
+    } catch (err) {
+      console.error("Voice generation failed:", err);
+      // Silently fail
+    }
+  }
+
   storeMessage(sender, "assistant", text);
   console.log(`📤 Sent Mino result to ${sender}`);
+
+  // Proactive: suggest alerts for frequently checked sites
+  await suggestAlertsForFrequentSites(sender);
+}
+
+// Proactively suggest alerts when user checks same site multiple times
+async function suggestAlertsForFrequentSites(sender: string): Promise<void> {
+  const sitesToSuggest = userModel.getSitesForAlertSuggestion(sender);
+
+  for (const site of sitesToSuggest.slice(0, 1)) {  // Only suggest one at a time
+    userModel.markAlertSuggested(sender, site.domain);
+    await iMessage.send(
+      sender,
+      `💡 I noticed you check ${site.domain} often. Want me to set up an alert to notify you of changes automatically?`
+    );
+    break;  // One suggestion per interaction
+  }
 }
 
 // Split message at natural break points
@@ -482,11 +726,20 @@ async function sendSmartIOSFeatures(sender: string, data: any, goal: string, url
       }
     }
 
-    // 4. Rich list data - ASK about image card instead of auto-generating
+    // 4. Rich list data - Auto-generate visual card (no longer asking)
+    const profile = userModel.getOrCreateProfile(sender);
     const cardStyle = detectCardStyle(data, goal);
-    if (cardStyle) {
-      pendingImageGen.set(sender, { data, goal });
-      await iMessage.send(sender, `\n🎨 Want me to create a visual card? Reply "yes" or "card"`);
+    if (cardStyle && profile.totalMessages > 3) {  // Only after user is established
+      try {
+        const cardPath = await generateDataCard(data, goal, cardStyle);
+        if (cardPath) {
+          await iMessage.sendFile(sender, cardPath);
+          console.log(`🎨 Auto-sent visual card for ${goal}`);
+        }
+      } catch (err) {
+        console.error("Card generation failed:", err);
+        // Silently fail - don't interrupt the flow
+      }
     }
 
     // 5. Add relevant deep links
@@ -639,9 +892,9 @@ async function handleAlertSetup(
   return false;
 }
 
-// Run a scheduled alert
+// Run a scheduled alert with change detection
 async function runScheduledAlert(alert: ScheduledAlert): Promise<void> {
-  const apiKey = getMinoApiKey(alert.phone) || MINO_API_KEY;
+  const apiKey = await getValidMinoToken(alert.phone);
   if (!apiKey) {
     console.log(`⚠️ No Mino API key for alert ${alert.id}`);
     return;
@@ -653,12 +906,19 @@ async function runScheduledAlert(alert: ScheduledAlert): Promise<void> {
     const result = await runMinoAutomation(apiKey, alert.url, alert.goal);
     const { text, data } = formatMinoForIMessage(result, alert.url, alert.goal);
 
-    // Update alert with result
-    scheduler.updateAlertAfterRun(alert.id, text);
+    // Check if result changed (returns { changed, alert })
+    const { changed } = scheduler.updateAlertAfterRun(alert.id, text);
 
-    // Send to user
-    await iMessage.send(alert.phone, `🔔 Alert: ${alert.name}\n\n${text}`);
-    console.log(`📤 Sent alert result to ${alert.phone}`);
+    // Only notify if data changed OR this is the first run
+    if (changed || !alert.lastResult) {
+      const changeIndicator = alert.lastResult
+        ? "🆕 Change detected!\n\n"
+        : "";
+      await iMessage.send(alert.phone, `🔔 ${alert.name}\n\n${changeIndicator}${text}`);
+      console.log(`📤 Sent alert result to ${alert.phone} (changed: ${changed})`);
+    } else {
+      console.log(`📤 Alert ${alert.name} - no change, skipping notification`);
+    }
 
   } catch (err) {
     console.error(`Alert ${alert.id} failed:`, err);
@@ -875,6 +1135,50 @@ function detectCardStyle(data: any, goal: string): "menu" | "list" | "info" | "c
   return null;
 }
 
+// Smart goal extraction from natural language
+function extractGoalFromText(text: string): string | undefined {
+  const patterns = [
+    // "availability of Winter Bliss on..."
+    /availability\s+of\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "when Winter Bliss is available..."
+    /when\s+(?:the\s+)?(.+?)\s+(?:is|are|becomes?)\s+available/i,
+    // "if Winter Bliss is back..."
+    /if\s+(?:the\s+)?(.+?)\s+(?:is|are)\s+(?:back|available|in stock)/i,
+    // "check for Winter Bliss..."
+    /check\s+(?:for\s+)?(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "monitor Winter Bliss..."
+    /monitor\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "notify me when Winter Bliss..."
+    /notify\s+(?:me\s+)?(?:when|if)\s+(?:the\s+)?(.+?)\s+(?:is|are|becomes?)/i,
+    // "alert me about Winter Bliss..."
+    /alert\s+(?:me\s+)?(?:about|for|when)\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "track Winter Bliss..."
+    /track\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "watch for Winter Bliss..."
+    /watch\s+(?:for\s+)?(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+    // "let me know when/if..."
+    /let\s+me\s+know\s+(?:when|if)\s+(?:the\s+)?(.+?)\s+(?:is|are|becomes?)/i,
+    // "update me on Winter Bliss..."
+    /update\s+me\s+(?:on|about)\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      let goal = match[1].trim();
+      // Clean up common words that might get captured
+      goal = goal.replace(/\s+(on|at|from|every|daily|weekly|hourly).*$/i, "");
+      // Clean up trailing punctuation
+      goal = goal.replace(/[,.!?]+$/, "").trim();
+      if (goal.length > 2) {
+        return `Check availability of ${goal}`;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 // Detect natural language alert requests
 interface AlertMatch {
   type: "create" | "update";
@@ -962,10 +1266,9 @@ async function handleNaturalAlertRequest(
     extractedUrl = urlMatch[0].startsWith("http") ? urlMatch[0] : `https://${urlMatch[0]}`;
     console.log(`   ↳ extractedUrl:`, extractedUrl);
 
-    // Try to extract goal
-    const goalMatch = text.match(/(?:availability of|check|find|get|monitor|look for|if)\s+(?:the\s+)?(.+?)(?:\s+(?:on|at|from|every|daily|weekly|hourly))/i);
-    if (goalMatch) {
-      extractedGoal = goalMatch[1].trim();
+    // Smarter goal extraction with multiple patterns
+    extractedGoal = extractGoalFromText(text);
+    if (extractedGoal) {
       console.log(`   ↳ extractedGoal:`, extractedGoal);
     }
   }
@@ -1069,6 +1372,74 @@ function generateAlertName(goal: string, domain: string): string {
   return `${domain}: ${words}`;
 }
 
+// Send aggregated morning brief
+async function sendMorningBrief(phone: string, alerts: ScheduledAlert[]): Promise<void> {
+  const profile = userModel.getOrCreateProfile(phone);
+  const greeting = userModel.getPersonalizedGreeting(phone);
+
+  console.log(`☀️ Generating morning brief for ${phone} (${alerts.length} alerts)`);
+
+  // Run all alerts and collect results
+  const results: Array<{ alert: ScheduledAlert; text: string; changed: boolean }> = [];
+
+  for (const alert of alerts) {
+    const apiKey = await getValidMinoToken(alert.phone);
+    if (!apiKey) continue;
+
+    try {
+      const result = await runMinoAutomation(apiKey, alert.url, alert.goal);
+      const { text } = formatMinoForIMessage(result, alert.url, alert.goal);
+      const { changed } = scheduler.updateAlertAfterRun(alert.id, text);
+      results.push({ alert, text, changed });
+    } catch (err) {
+      console.error(`Alert ${alert.name} failed:`, err);
+      results.push({ alert, text: `❌ Error checking ${alert.name}`, changed: false });
+    }
+  }
+
+  // Build the morning brief message
+  let brief = `${greeting}\n\n☀️ **Your Morning Brief**\n\n`;
+
+  // Highlight changes first
+  const changedResults = results.filter(r => r.changed);
+  const unchangedResults = results.filter(r => !r.changed);
+
+  if (changedResults.length > 0) {
+    brief += `🆕 **What's New:**\n`;
+    for (const { alert, text } of changedResults) {
+      const shortText = text.length > 150 ? text.slice(0, 150) + "..." : text;
+      brief += `• **${alert.name}:** ${shortText}\n\n`;
+    }
+  }
+
+  if (unchangedResults.length > 0) {
+    brief += `📋 **No Changes:**\n`;
+    for (const { alert } of unchangedResults) {
+      brief += `• ${alert.name} — same as yesterday\n`;
+    }
+    brief += "\n";
+  }
+
+  // Add predictions based on user model
+  const predictions = userModel.predictNextTopics(phone);
+  if (predictions.length > 0) {
+    brief += `\n💡 Might want to check: ${predictions.slice(0, 2).join(", ")}?`;
+  }
+
+  brief += `\n\n_Reply anytime if you need anything!_`;
+
+  // Send the brief
+  await iMessage.send(phone, brief);
+
+  // If any alerts have long content, offer voice version
+  const longResults = results.filter(r => r.text.length > 500);
+  if (longResults.length > 0 && profile.totalMessages > 5) {
+    await iMessage.send(phone, `🎙️ Want me to read the full ${longResults[0].alert.name} update as a voice message?`);
+  }
+
+  console.log(`✅ Sent morning brief to ${phone}`);
+}
+
 // Start the bot
 async function main() {
   console.log(`
@@ -1085,6 +1456,7 @@ async function main() {
 
   // Start scheduler for alerts
   scheduler.setSchedulerCallback(runScheduledAlert);
+  scheduler.setMorningBriefCallback(sendMorningBrief);
   scheduler.startScheduler();
 
   // Mino connection callback

@@ -1,4 +1,40 @@
+# Dependencies
 node_modules/
+
+# Environment
 .env
-*.log
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Database
+*.db
+*.sqlite
+
+# Generated files
+*.vcf
+*.ics
+*.loc.vcf
