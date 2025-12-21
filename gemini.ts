@@ -18,6 +18,7 @@ import {
 } from "@google-cloud/vertexai";
 import { getUserByPhone, isNewUser, updateUserName } from "./db";
 import userModel from "./user-model";
+import mira from "./mira";
 
 // Conversation history per contact
 const conversationHistory = new Map<string, Content[]>();
@@ -298,12 +299,20 @@ function getChatModel(phone: string): GenerativeModel {
   const responseLength = userModel.getPreferredResponseLength(phone);
   const useEmoji = userModel.shouldUseEmoji(phone);
 
+  // Get MIRA memory context
+  const miraContext = mira.getFormattedContext(phone);
+
   // Dynamic response length based on user preference
   const maxChars = responseLength === "brief" ? 200 : responseLength === "detailed" ? 800 : 500;
 
   let systemInstruction = `You are Mino, a friendly AI assistant on iMessage.
 Keep responses concise (under ${maxChars} chars) - this is texting!
 `;
+
+  // Add MIRA memory context if available
+  if (miraContext) {
+    systemInstruction += `\n${miraContext}\n`;
+  }
 
   // Personalization based on user model
   if (profile.formalityScore < 0.4) {
@@ -573,6 +582,15 @@ export async function chat(contactId: string, message: string): Promise<ChatResu
   const debug = isDebugEnabled(contactId);
   let debugLog = "";
 
+  // Process through MIRA (memory, tools, context)
+  const miraResult = mira.processUserMessage(contactId, message, 0.5);
+  if (miraResult.activated.length > 0) {
+    if (debug) debugLog += `🧠 MIRA tools activated: ${miraResult.activated.map(t => t.name).join(", ")}\n`;
+  }
+  if (miraResult.expired.length > 0) {
+    if (debug) debugLog += `🧠 MIRA tools expired: ${miraResult.expired.join(", ")}\n`;
+  }
+
   try {
     let history = conversationHistory.get(contactId) || [];
 
@@ -684,6 +702,14 @@ export async function chat(contactId: string, message: string): Promise<ChatResu
       history = history.slice(-MAX_HISTORY * 2);
     }
     conversationHistory.set(contactId, history);
+
+    // Process assistant response through MIRA
+    const toolsUsed: string[] = [];
+    if (result.action === "mino") toolsUsed.push("mino_browser");
+    if (result.action === "voice") toolsUsed.push("voice_message");
+    if (result.action === "homekit") toolsUsed.push("homekit");
+    if (result.action === "alert") toolsUsed.push("alert_monitor");
+    mira.processAssistantResponse(contactId, result.text || "", toolsUsed);
 
     // Attach debug log if enabled
     if (debug && debugLog) {

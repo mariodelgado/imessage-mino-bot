@@ -16,6 +16,7 @@ import { getOrCreateUser, storeMessage, updateUserName, setMinoState, getMinoApi
 import { startOAuthServer, generateMinoOAuthUrl, generateState, setMinoConnectedCallback, refreshAccessToken } from "./oauth-server";
 import userModel from "./user-model";
 import security from "./security";
+import mira from "./mira";
 
 // Load environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -49,6 +50,7 @@ const HELP_TEXT = `🤖 Mino - Your AI Assistant
 
 Chat naturally! I can:
 • 🌐 Browse websites for real-time info
+• 🧠 Remember things across conversations
 • ⏰ Set up recurring alerts
 • 🎙️ Send voice messages
 • 📍 Share locations & directions
@@ -61,6 +63,9 @@ Commands:
 /voice [text] - Voice message
 /remind 5m [msg] - Quick reminder
 /home [scene] - HomeKit scene
+/memory - View your memories
+/remember [text] - Store a memory
+/forget [query] - Remove a memory
 /connect - Link Mino account
 /disconnect - Unlink Mino account
 /status - Check your connection
@@ -302,6 +307,54 @@ async function handleMessage(message: Message) {
     } else if (text.toLowerCase() === "/debug") {
       const enabled = toggleDebug(sender);
       await iMessage.send(sender, enabled ? "🐟 Debug mode ON" : "🔇 Debug mode OFF");
+      return;
+    } else if (text.toLowerCase() === "/memory" || text.toLowerCase() === "/memories") {
+      const stats = mira.getStatus(sender);
+      const recentMemories = mira.getRecentMemories(sender, 5);
+
+      let memStatus = `🧠 **Your Memory Stats**\n\n`;
+      if (stats.memory) {
+        memStatus += `📊 Total memories: ${stats.memory.total}\n`;
+        memStatus += `💪 Avg strength: ${(stats.memory.avgStrength * 100).toFixed(0)}%\n`;
+        if (stats.memory.byType) {
+          const types = Object.entries(stats.memory.byType).map(([t, c]) => `${t}: ${c}`).join(", ");
+          memStatus += `📁 By type: ${types}\n`;
+        }
+      }
+
+      if (recentMemories.length > 0) {
+        memStatus += `\n📝 **Recent Memories:**\n`;
+        for (const mem of recentMemories) {
+          const strength = `${(mem.strength * 100).toFixed(0)}%`;
+          const preview = mem.content.slice(0, 50) + (mem.content.length > 50 ? "..." : "");
+          memStatus += `• [${strength}] ${preview}\n`;
+        }
+      } else {
+        memStatus += `\nNo memories yet! Keep chatting to build your memory.`;
+      }
+
+      await iMessage.send(sender, memStatus);
+      return;
+    } else if (text.toLowerCase().startsWith("/remember ")) {
+      const content = text.slice(10).trim();
+      if (content) {
+        mira.remember(sender, content, { type: "semantic", importance: 0.8 });
+        await iMessage.send(sender, `✅ I'll remember that!`);
+      } else {
+        await iMessage.send(sender, `Usage: /remember [something to remember]`);
+      }
+      return;
+    } else if (text.toLowerCase().startsWith("/forget ")) {
+      const query = text.slice(8).trim();
+      if (query) {
+        const memories = mira.recall(sender, query, 1);
+        if (memories.length > 0) {
+          mira.forget(sender, memories[0].id);
+          await iMessage.send(sender, `✅ Forgot: "${memories[0].content.slice(0, 50)}..."`);
+        } else {
+          await iMessage.send(sender, `🤔 Couldn't find a memory matching "${query}"`);
+        }
+      }
       return;
     } else if (text.toLowerCase().startsWith("/voice ")) {
       // Voice message command
@@ -1448,8 +1501,12 @@ async function main() {
 ║                                           ║
 ║  🤖 Gemini 2.5 Flash (Agentic)            ║
 ║  🌐 Mino browser automation               ║
+║  🧠 MIRA persistent memory                ║
 ╚═══════════════════════════════════════════╝
   `);
+
+  // Initialize MIRA (memory, events, tools)
+  mira.initMira();
 
   // Start OAuth server
   await startOAuthServer();
@@ -1494,3 +1551,16 @@ async function main() {
 }
 
 main().catch(console.error);
+
+// Graceful shutdown
+process.on("SIGINT", () => {
+  console.log("\n⏹️ Shutting down...");
+  mira.shutdownMira();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.log("\n⏹️ Shutting down...");
+  mira.shutdownMira();
+  process.exit(0);
+});
