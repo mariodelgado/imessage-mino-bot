@@ -1,0 +1,12 @@
+{
+  "images": [
+    {
+      "filename": "mino_icon_small.png",
+      "idiom": "universal"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}
