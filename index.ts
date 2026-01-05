@@ -17,6 +17,7 @@ import { startOAuthServer, generateMinoOAuthUrl, generateState, setMinoConnected
 import userModel from "./user-model";
 import security from "./security";
 import mira from "./mira";
+import systemSurf from "./system-surf";
 
 // Load environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -426,6 +427,88 @@ async function handleMessage(message: Message) {
           await iMessage.send(sender, `✅ Deleted alert: ${alert.name}`);
         } else {
           await iMessage.send(sender, `❌ Alert #${index + 1} not found`);
+        }
+      }
+      return;
+    }
+
+    // System.surf commands (Mario only)
+    if (text.toLowerCase().startsWith("/system") || text.startsWith("@system ")) {
+      if (!systemSurf.isAuthorized(sender)) {
+        await iMessage.send(sender, "⚠️ System.surf is not available for your account.");
+        return;
+      }
+
+      if (!systemSurf.isConfigured()) {
+        await iMessage.send(sender, "⚠️ System.surf not configured. Set SYSTEM_SURF_URL and SYSTEM_SURF_TOKEN env vars.");
+        return;
+      }
+
+      const isAtTrigger = text.startsWith("@system ");
+      const command = isAtTrigger ? text.slice(8).trim() : text.slice(7).trim();
+
+      // Handle specific /system subcommands
+      if (!isAtTrigger) {
+        if (command === "" || command === "help") {
+          await iMessage.send(sender, `🖥️ **System.surf Commands**
+
+/system [command] - Execute Mac command
+/system schedules - View scheduled tasks
+/system reset - Reset conversation state
+
+Or use @system [command] for quick access:
+@system open spotify
+@system play music
+@system set brightness to 50%
+@system turn on dark mode`);
+          return;
+        }
+
+        if (command === "schedules") {
+          try {
+            const schedules = await systemSurf.getSchedules();
+            await iMessage.send(sender, systemSurf.formatSchedules(schedules));
+          } catch (err) {
+            await iMessage.send(sender, `❌ Failed to get schedules: ${err instanceof Error ? err.message : "Unknown error"}`);
+          }
+          return;
+        }
+
+        if (command === "reset") {
+          try {
+            await systemSurf.reset();
+            await iMessage.send(sender, "✅ System.surf conversation reset.");
+          } catch (err) {
+            await iMessage.send(sender, `❌ Failed to reset: ${err instanceof Error ? err.message : "Unknown error"}`);
+          }
+          return;
+        }
+
+        if (command.startsWith("delete schedule ")) {
+          const id = command.slice(16).trim();
+          try {
+            const success = await systemSurf.deleteSchedule(id);
+            if (success) {
+              await iMessage.send(sender, `✅ Deleted schedule ${id}`);
+            } else {
+              await iMessage.send(sender, `❌ Schedule ${id} not found`);
+            }
+          } catch (err) {
+            await iMessage.send(sender, `❌ Failed to delete schedule: ${err instanceof Error ? err.message : "Unknown error"}`);
+          }
+          return;
+        }
+      }
+
+      // Execute command via system.surf
+      if (command) {
+        await iMessage.send(sender, `🖥️ Executing: "${command}"...`);
+        try {
+          const response = await systemSurf.chat(command);
+          await iMessage.send(sender, systemSurf.formatResponse(response));
+          console.log(`🖥️ System.surf executed for ${sender}: ${command}`);
+        } catch (err) {
+          await iMessage.send(sender, `❌ System.surf error: ${err instanceof Error ? err.message : "Unknown error"}`);
         }
       }
       return;
