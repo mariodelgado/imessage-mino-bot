@@ -1,0 +1,7 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/investor/layout,_N_T_/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479/layout,_N_T_/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479/page,_N_T_/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479"
+  }
+}

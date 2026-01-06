@@ -1,0 +1,78 @@
+[
+  {
+    "id": "del_1767720890413",
+    "subscriptionId": "mario-001",
+    "content": {
+      "greeting": "Good morning, Mario!",
+      "highlights": [
+        {
+          "topic": "Startups",
+          "title": "Kraken led the day with a $1 billion funding round to scale its AI-powered platform for utilities after spinning out from Octopus Energy",
+          "source": "Tech Startups",
+          "url": "https://techstartups.com/2026/01/05/top-startup-and-tech-funding-news-january-5-2025/",
+          "snippet": "Kraken raised $1 billion to scale its AI-powered platform for utilities, while Airalo raised $220 million for its borderless eSIM marketplace.",
+          "priority": "critical",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "Apple company news",
+          "title": "India exports iPhones worth $50 billion under PLI scheme till December 2025",
+          "source": "Storyboard18",
+          "url": "https://www.storyboard18.com/brand-marketing/india-exports-iphones-worth-50-billion-under-pli-scheme-till-december-2025-86993.htm",
+          "snippet": "Apple Inc, through its manufacturing partners in India, has exported iPhones worth $50 billion until December 2025, marking record performance.",
+          "priority": "critical",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "AI & Machine Learning",
+          "title": "6 Charts That Show The Big AI Funding Trends Of 2025",
+          "source": "Crunchbase",
+          "url": "https://news.crunchbase.com/ai/big-funding-trends-charts-eoy-2025/",
+          "snippet": "AI captured 50% of global funding in 2025 with $202.3 billion invested, up 75% year-over-year, with OpenAI valued at $500 billion as most valuable private company ever.",
+          "priority": "high",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "Startups",
+          "title": "Marissa Mayer's new startup Dazzle raises $8M led by Forerunner's Kirsten Green",
+          "source": "TechCrunch",
+          "url": "https://techcrunch.com/2025/12/23/marissa-mayers-new-startup-dazzle-raises-8m-led-by-forerunners-kirsten-green/",
+          "snippet": "Former Yahoo CEO launches AI personal assistant startup after shutting down Sunshine, with plans to exit stealth in 2026.",
+          "priority": "high",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "Startups",
+          "title": "Twitter co-founder Biz Stone and Pinterest co-founder Evan Sharp have raised new funding for a social media app",
+          "source": "TechCrunch",
+          "url": "https://techcrunch.com/2026/01/04/can-a-social-app-fix-the-terrible-devastation-of-social-media/",
+          "snippet": "West Co. social media startup helps users plan with intention and capture the reality of their days.",
+          "priority": "high",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "Apple company news",
+          "title": "Six new Apple products will launch early this year, here's what's coming - 9to5Mac",
+          "source": "9to5Mac",
+          "url": "https://9to5mac.com/2026/01/05/six-apple-products-will-launch-early-this-year-heres-whats-coming/",
+          "snippet": "Apple will launch 14-inch and 16-inch MacBook Pros with M5 Pro and M5 Max early in 2026, along with iPhone 17e and M5 MacBook Air.",
+          "priority": "high",
+          "sentiment": "neutral"
+        },
+        {
+          "topic": "AI & Machine Learning",
+          "title": "AI may not need massive training data after all",
+          "source": "ScienceDaily",
+          "url": "https://www.sciencedaily.com/releases/2025/12/251228074457.htm",
+          "snippet": "Johns Hopkins research shows brain-inspired AI designs can mimic human brain activity before training on any data, challenging the data-hungry approach to AI development.",
+          "priority": "medium",
+          "sentiment": "neutral"
+        }
+      ],
+      "summary": "🔥 Kraken just raised a MASSIVE $1B round (yes, billion with a B) to power up utilities with AI after spinning out from Octopus Energy. Meanwhile, India's crushing it with $50B in iPhone exports and new data shows where AI funding is actually flowing in 2025. Worth a deeper dive? 📊",
+      "generatedAt": "2026-01-06T17:34:50.301Z"
+    },
+    "status": "sent",
+    "deliveredAt": "2026-01-06T17:34:50.413Z"
+  }
+]

@@ -1,0 +1,150 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/briefings/[id]",
+      "regex": "^/api/briefings/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/briefings/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/investor/[id]/brief",
+      "regex": "^/api/investor/([^/]+?)/brief(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/brief(?:/)?$"
+    },
+    {
+      "page": "/api/investor/[id]/chat",
+      "regex": "^/api/investor/([^/]+?)/chat(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/chat(?:/)?$"
+    },
+    {
+      "page": "/api/investor/[id]/feedback",
+      "regex": "^/api/investor/([^/]+?)/feedback(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/feedback(?:/)?$"
+    },
+    {
+      "page": "/api/investor/[id]/preferences",
+      "regex": "^/api/investor/([^/]+?)/preferences(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/preferences(?:/)?$"
+    },
+    {
+      "page": "/api/og/[id]",
+      "regex": "^/api/og/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/og/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/snap-apps/[id]",
+      "regex": "^/api/snap\\-apps/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/snap\\-apps/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/snap-apps/[id]/refresh",
+      "regex": "^/api/snap\\-apps/([^/]+?)/refresh(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/snap\\-apps/(?<nxtPid>[^/]+?)/refresh(?:/)?$"
+    },
+    {
+      "page": "/app/[id]",
+      "regex": "^/app/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/app/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/demo",
+      "regex": "^/demo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/demo(?:/)?$"
+    },
+    {
+      "page": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34",
+      "regex": "^/investor/ece30471\\-dff9\\-448e\\-81f5\\-6f0286b00a34(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/investor/ece30471\\-dff9\\-448e\\-81f5\\-6f0286b00a34(?:/)?$"
+    },
+    {
+      "page": "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "regex": "^/investor/f47ac10b\\-58cc\\-4372\\-a567\\-0e02b2c3d479(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/investor/f47ac10b\\-58cc\\-4372\\-a567\\-0e02b2c3d479(?:/)?$"
+    },
+    {
+      "page": "/subscribe",
+      "regex": "^/subscribe(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/subscribe(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

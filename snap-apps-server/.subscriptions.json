@@ -1,0 +1,35 @@
+{
+  "subscriptions": [
+    {
+      "id": "mario-001",
+      "userId": "phone:14156836861",
+      "name": "Mario",
+      "phone": "+14156836861",
+      "topics": ["AI & Machine Learning", "Fintech", "Startups"],
+      "companies": ["OpenAI", "Anthropic", "Apple"],
+      "schedule": {
+        "enabled": true,
+        "time": "07:00",
+        "timezone": "America/Los_Angeles",
+        "daysOfWeek": [0, 1, 2, 3, 4, 5, 6]
+      },
+      "deliveryMethod": "imessage",
+      "isActive": true,
+      "createdAt": "2026-01-06T00:00:00.000Z",
+      "updatedAt": "2026-01-06T00:00:00.000Z"
+    }
+  ],
+  "snapApps": [
+    {
+      "id": "ece30471-dff9-448e-81f5-6f0286b00a34",
+      "type": "morning-brief",
+      "name": "Ryan Koh Investor Portfolio",
+      "description": "Premium glassmorphic investor dashboard for Ryan Koh (ICONIQ Capital)",
+      "userId": "phone:14156836861",
+      "route": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34",
+      "createdAt": "2026-01-06T00:00:00.000Z",
+      "isActive": true
+    }
+  ],
+  "lastUpdated": "2026-01-06T00:00:00.000Z"
+}

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "functions": {
+    "/api/cron/refresh": {
+      "maxDuration": 60
+    },
+    "/api/cron/pricing": {
+      "maxDuration": 300
+    },
+    "/api/investor/[id]/feedback": {},
+    "/api/og/investor": {},
+    "/api/og/[id]": {},
+    "/api/investor/[id]/preferences": {},
+    "/api/investor/[id]/chat": {
+      "maxDuration": 60
+    },
+    "/api/cron/investor-news": {
+      "maxDuration": 60
+    },
+    "/api/cron/briefings": {
+      "maxDuration": 300
+    }
+  }
+}
