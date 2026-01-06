@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { motion, useScroll, useSpring, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
   TrendingDown,
@@ -332,8 +332,6 @@ function SettingsPanel({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -487,8 +485,6 @@ function FeedbackPanel({
       onClose();
     }, 1500);
   };
-
-  if (!isOpen) return null;
 
   return (
     <motion.div
@@ -714,8 +710,6 @@ function ChatPanel({
     { icon: TrendingUp, text: "Latest AI infrastructure news" },
     { icon: Target, text: "Competitive analysis for Sendbird" },
   ];
-
-  if (!isOpen) return null;
 
   return (
     <motion.div
@@ -1562,22 +1556,34 @@ export default function RyanInvestorDashboard() {
       </div>
 
       {/* Settings & Feedback Panels */}
-      <SettingsPanel
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        preferences={preferences}
-        onSave={handleSavePreferences}
-      />
-      <FeedbackPanel
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-        onSubmit={handleSubmitFeedback}
-      />
-      <ChatPanel
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        investorId={INVESTOR_ID}
-      />
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsPanel
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            preferences={preferences}
+            onSave={handleSavePreferences}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isFeedbackOpen && (
+          <FeedbackPanel
+            isOpen={isFeedbackOpen}
+            onClose={() => setIsFeedbackOpen(false)}
+            onSubmit={handleSubmitFeedback}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isChatOpen && (
+          <ChatPanel
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            investorId={INVESTOR_ID}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Floating Action Button - Mino Chat */}
       {!isChatOpen && (
