@@ -24,21 +24,17 @@ import {
   Text,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  withRepeat,
-  withSequence,
-  Easing,
   FadeIn,
   FadeInUp,
   SlideInRight,
   SlideInLeft,
   Layout,
   interpolate,
+  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -144,160 +140,6 @@ interface WelcomeMessage {
   isIntro?: boolean;
 }
 
-// ============================================================================
-// ETHEREAL FOG LAYER - Multi-layered Kiri mist
-// ============================================================================
-
-interface MistLayerProps {
-  isDark: boolean;
-}
-
-function MistLayer({ isDark }: MistLayerProps) {
-  // Multiple fog layers with different drift speeds
-  const fog1Y = useSharedValue(0);
-  const fog1X = useSharedValue(0);
-  const fog2Y = useSharedValue(0);
-  const fog2X = useSharedValue(0);
-  const fog3Y = useSharedValue(0);
-  const fogOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    // Gentle fade in
-    fogOpacity.value = withTiming(1, { duration: 3000 });
-
-    // Layer 1 - Slow, sweeping drift
-    fog1Y.value = withRepeat(
-      withSequence(
-        withTiming(-20, { duration: 20000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(20, { duration: 20000, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-    fog1X.value = withRepeat(
-      withSequence(
-        withTiming(10, { duration: 25000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(-10, { duration: 25000, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-
-    // Layer 2 - Medium drift, counter-motion
-    fog2Y.value = withRepeat(
-      withSequence(
-        withTiming(15, { duration: 15000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(-15, { duration: 15000, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-    fog2X.value = withRepeat(
-      withSequence(
-        withTiming(-8, { duration: 18000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(8, { duration: 18000, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-
-    // Layer 3 - Gentle vertical pulse
-    fog3Y.value = withRepeat(
-      withSequence(
-        withTiming(-12, { duration: 10000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(12, { duration: 10000, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fog1Style = useAnimatedStyle(() => ({
-    opacity: fogOpacity.value * 0.4,
-    transform: [{ translateY: fog1Y.value }, { translateX: fog1X.value }],
-  }));
-
-  const fog2Style = useAnimatedStyle(() => ({
-    opacity: fogOpacity.value * 0.3,
-    transform: [{ translateY: fog2Y.value }, { translateX: fog2X.value }],
-  }));
-
-  const fog3Style = useAnimatedStyle(() => ({
-    opacity: fogOpacity.value * 0.5,
-    transform: [{ translateY: fog3Y.value }],
-  }));
-
-  // Ethereal fog colors
-  const fogColorLight = isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(0, 0, 0, 0.02)';
-  const fogColorMedium = isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.03)';
-  const fogColorDense = isDark
-    ? 'rgba(255, 255, 255, 0.07)'
-    : 'rgba(0, 0, 0, 0.04)';
-
-  return (
-    <View style={StyleSheet.absoluteFill}>
-      {/* Base ambient glow */}
-      <LinearGradient
-        colors={[
-          isDark ? 'rgba(30, 30, 50, 0.3)' : 'rgba(240, 240, 250, 0.5)',
-          'transparent',
-          isDark ? 'rgba(20, 20, 40, 0.2)' : 'rgba(245, 245, 255, 0.3)',
-        ]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-
-      {/* Fog layer 1 - Upper ethereal mist */}
-      <Animated.View style={[StyleSheet.absoluteFill, fog1Style]}>
-        <LinearGradient
-          colors={[fogColorDense, 'transparent', fogColorLight]}
-          style={[styles.mistGradient, { height: '60%', top: -20 }]}
-          start={{ x: 0.3, y: 0 }}
-          end={{ x: 0.7, y: 1 }}
-        />
-      </Animated.View>
-
-      {/* Fog layer 2 - Mid ethereal drift */}
-      <Animated.View style={[StyleSheet.absoluteFill, fog2Style]}>
-        <LinearGradient
-          colors={['transparent', fogColorMedium, 'transparent']}
-          style={[styles.mistGradient, { height: '50%', top: '25%' }]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-        />
-      </Animated.View>
-
-      {/* Fog layer 3 - Lower ground mist */}
-      <Animated.View style={[StyleSheet.absoluteFill, fog3Style]}>
-        <LinearGradient
-          colors={['transparent', fogColorDense]}
-          style={[styles.mistGradient, { bottom: 0, height: '45%' }]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-        />
-      </Animated.View>
-
-      {/* Subtle radial glow in center */}
-      <View style={styles.centerGlow}>
-        <LinearGradient
-          colors={[
-            isDark ? 'rgba(100, 100, 150, 0.08)' : 'rgba(255, 255, 255, 0.6)',
-            'transparent',
-          ]}
-          style={styles.centerGlowGradient}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 0.5, y: 1 }}
-        />
-      </View>
-    </View>
-  );
-}
 
 // ============================================================================
 // KIRI TYPOGRAPHY - Large contrast for hierarchy
@@ -929,9 +771,6 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Kiri mist layer */}
-      <MistLayer isDark={isDark} />
-
       {/* Header - minimal, typography focused */}
       <Animated.View
         entering={FadeIn.delay(100).duration(600)}
@@ -985,27 +824,6 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-
-  // Ethereal fog
-  mistGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-  },
-  centerGlow: {
-    position: 'absolute',
-    top: '20%',
-    left: '10%',
-    right: '10%',
-    height: '40%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerGlowGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 200,
   },
 
   // Header

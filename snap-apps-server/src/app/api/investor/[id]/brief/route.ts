@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getInvestor } from "@/lib/investors";
 
 // ============================================================================
 // INVESTOR BRIEF API - Generates iMessage-friendly text summary
+// Uses centralized investor configuration from /lib/investors.ts
 // ============================================================================
 
 interface NewsItem {
@@ -15,48 +17,6 @@ interface NewsItem {
   category: "competitive" | "churn" | "talent" | "funding" | "product" | "legal" | "exit";
   url?: string;
 }
-
-interface PortfolioCompany {
-  name: string;
-  status: "active" | "acquired" | "public" | "board";
-  ticker?: string;
-  valuation?: string;
-  sector: string;
-  invested: string;
-  ownership?: string;
-  round?: string;
-  needsAttention?: boolean;
-}
-
-// Investor configurations (could move to database later)
-const INVESTORS: Record<string, {
-  name: string;
-  firstName: string;
-  firm: string;
-  role: string;
-  phone: string;
-  companies: PortfolioCompany[];
-}> = {
-  "ece30471-dff9-448e-81f5-6f0286b00a34": {
-    name: "Ryan Koh",
-    firstName: "Ryan",
-    firm: "ICONIQ Capital",
-    role: "Partner",
-    phone: "+14156836861",
-    companies: [
-      { name: "TinyFish", status: "active", sector: "AI/ML", invested: "$15M", valuation: "$180M", round: "Series A" },
-      { name: "Statsig", status: "acquired", ticker: "OpenAI", sector: "DevTools", invested: "$22M", valuation: "Acquired", round: "Series B" },
-      { name: "Adaptive ML", status: "active", sector: "AI/ML", invested: "$18M", valuation: "$320M", round: "Series B" },
-      { name: "Pinecone", status: "active", sector: "Infrastructure", invested: "$35M", valuation: "$750M", ownership: "4.2%", round: "Series B" },
-      { name: "Groww", status: "public", ticker: "NSE:GROWW", sector: "Fintech", invested: "$28M", valuation: "$3.2B", round: "Series C" },
-      { name: "Spotnana", status: "board", sector: "Travel Tech", invested: "$40M", valuation: "$1.1B", ownership: "6.8%", round: "Series C", needsAttention: true },
-      { name: "Unit21", status: "active", sector: "Fintech", invested: "$12M", valuation: "$280M", round: "Series B", needsAttention: true },
-      { name: "Reprise", status: "active", sector: "Sales Tech", invested: "$8M", valuation: "$120M", round: "Series A" },
-      { name: "Highspot", status: "board", sector: "Sales Tech", invested: "$45M", valuation: "$3.5B", ownership: "3.1%", round: "Series D" },
-      { name: "Sendbird", status: "board", sector: "Communications", invested: "$25M", valuation: "$1.05B", ownership: "2.4%", round: "Series C" },
-    ],
-  },
-};
 
 // Generate time-based greeting
 function getGreeting(): string {
@@ -140,7 +100,7 @@ function formatNewsForMessage(news: NewsItem[]): string {
     return "No portfolio news in the last 24 hours.";
   }
 
-  return sorted.slice(0, 5).map((item, i) => {
+  return sorted.slice(0, 5).map((item) => {
     const emoji = item.priority === "critical" ? "🚨" :
                   item.priority === "high" ? "📰" : "•";
     const categoryEmoji: Record<string, string> = {
@@ -162,10 +122,20 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const investor = INVESTORS[id];
+  const investor = getInvestor(id);
 
   if (!investor) {
     return NextResponse.json({ error: "Investor not found" }, { status: 404 });
+  }
+
+  // Check if investor is onboarded
+  if (!investor.isOnboarded) {
+    return NextResponse.json({
+      success: false,
+      error: "Investor setup incomplete",
+      onboardingStep: investor.onboardingStep,
+      message: "Please complete onboarding to receive your daily brief.",
+    }, { status: 400 });
   }
 
   // Fetch latest news from the investor-news API
@@ -175,7 +145,7 @@ export async function GET(
 
   let news: NewsItem[] = [];
   try {
-    const newsResponse = await fetch(`${baseUrl}/api/cron/investor-news`, {
+    const newsResponse = await fetch(`${baseUrl}/api/cron/investor-news?investorId=${id}`, {
       headers: { "x-internal-request": "true" },
     });
     if (newsResponse.ok) {

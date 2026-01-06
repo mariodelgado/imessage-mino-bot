@@ -60,6 +60,14 @@
       "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/preferences(?:/)?$"
     },
     {
+      "page": "/api/investor/[id]/snap-apps",
+      "regex": "^/api/investor/([^/]+?)/snap\\-apps(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/investor/(?<nxtPid>[^/]+?)/snap\\-apps(?:/)?$"
+    },
+    {
       "page": "/api/og/[id]",
       "regex": "^/api/og/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -104,6 +112,12 @@
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/briefing/tinyfish",
+      "regex": "^/briefing/tinyfish(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/briefing/tinyfish(?:/)?$"
     },
     {
       "page": "/demo",

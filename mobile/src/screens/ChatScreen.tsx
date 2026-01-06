@@ -46,7 +46,6 @@ import {
 } from '../components';
 import {
   useThinkingEffect,
-  AmbientLayer,
 } from '../components/CinematicEffects';
 import {
   Body,
@@ -548,8 +547,6 @@ export default function ChatScreen() {
       style={[styles.container, { backgroundColor: colors.background.primary }]}
       edges={['top']}
     >
-      {/* Ambient cinematic background - subtle aurora effect */}
-      <AmbientLayer variant="aurora" intensity="subtle" />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}

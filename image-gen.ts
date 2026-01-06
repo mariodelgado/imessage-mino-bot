@@ -10,8 +10,8 @@ import * as os from "os";
 
 let vertexAI: VertexAI | null = null;
 
-export function initImageGen(projectId: string, location: string = "us-central1") {
-  // Use global location for gemini-3-pro-image-preview
+export function initImageGen(projectId: string, _location: string = "us-central1") {
+  // Use global location for gemini-3-pro-image-preview (param kept for API compatibility)
   vertexAI = new VertexAI({ project: projectId, location: "global" });
 }
 

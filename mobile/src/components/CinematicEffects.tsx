@@ -19,7 +19,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, StyleSheet, AppState } from 'react-native';
+import { StyleSheet, AppState } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,7 +28,6 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../theme';
 
 // Import iOS Live Activity service
 import {
@@ -38,17 +37,8 @@ import {
   stopActivity,
 } from '../services/liveActivity';
 
-// Import all cinematic components
+// Import Dynamic Island - legitimate iOS feature
 import { DynamicIsland, DynamicIslandState, DynamicIslandActivity } from './DynamicIsland';
-import {
-  ParticleField,
-  AuroraBackground,
-  DiscoveryPulse,
-} from './AirDropEffects';
-import {
-  Starfield,
-  WarpSpeed,
-} from './TimeMachineEffects';
 
 // ============================================================================
 // LIVE ACTIVITY TYPES - iOS Lock Screen Integration
@@ -218,20 +208,14 @@ interface CinematicContextValue {
   playHapticSequence: (patterns: HapticPattern[], delays?: number[]) => void;
 
   // Effect triggers
-  triggerDiscovery: (x: number, y: number, color?: string) => void;
-  triggerWarp: (onComplete?: () => void) => void;
   triggerCelebration: () => void;
   triggerError: () => void;
 
   // Ambient state (read-only)
   ambientEnabled: boolean;
-  particlesEnabled: boolean;
-  starsEnabled: boolean;
 
   // Ambient controls
   setAmbientEnabled: (enabled: boolean) => void;
-  setParticlesEnabled: (enabled: boolean) => void;
-  setStarsEnabled: (enabled: boolean) => void;
 }
 
 const CinematicContext = createContext<CinematicContextValue | null>(null);
@@ -259,14 +243,10 @@ export function CinematicProvider({
   defaultIntensity = 'normal',
   enableAmbient = true,
 }: CinematicProviderProps) {
-  const { colors } = useTheme();
-
   // Core state
   const [effectMode, setEffectMode] = useState<EffectMode>('idle');
   const [intensity, setIntensity] = useState<'subtle' | 'normal' | 'intense'>(defaultIntensity);
   const [ambientEnabled, setAmbientEnabled] = useState(enableAmbient);
-  const [particlesEnabled, setParticlesEnabled] = useState(true);
-  const [starsEnabled, setStarsEnabled] = useState(true);
 
   // Dynamic Island state
   const [islandState, setIslandState] = useState<DynamicIslandState>('hidden');
@@ -278,13 +258,6 @@ export function CinematicProvider({
   // Live Activities
   const [liveActivities, setLiveActivities] = useState<LiveActivityState[]>([]);
   const activityIdCounter = useRef(0);
-
-  // Effect triggers state
-  const [discoveryPulses, setDiscoveryPulses] = useState<
-    { id: string; x: number; y: number; color?: string }[]
-  >([]);
-  const [warpActive, setWarpActive] = useState(false);
-  const warpCallback = useRef<(() => void) | null>(null);
 
   // App state tracking for background/foreground
   useEffect(() => {
@@ -303,6 +276,23 @@ export function CinematicProvider({
     return () => subscription.remove();
   }, [ambientEnabled]);
 
+  // Haptic controls - defined first so other hooks can use them
+  const playHaptic = useCallback((pattern: HapticPattern) => {
+    hapticPatterns[pattern]?.();
+  }, []);
+
+  const playHapticSequence = useCallback(
+    async (patterns: HapticPattern[], delays: number[] = []) => {
+      for (let i = 0; i < patterns.length; i++) {
+        await hapticPatterns[patterns[i]]?.();
+        if (delays[i]) {
+          await new Promise((r) => setTimeout(r, delays[i]));
+        }
+      }
+    },
+    []
+  );
+
   // Dynamic Island controls
   const showDynamicIsland = useCallback(
     (activity: DynamicIslandActivity, title?: string, subtitle?: string) => {
@@ -312,23 +302,23 @@ export function CinematicProvider({
       setIslandState('compact');
       playHaptic('morphing');
     },
-    []
+    [playHaptic]
   );
 
   const hideDynamicIsland = useCallback(() => {
     setIslandState('hidden');
     playHaptic('soft_pulse');
-  }, []);
+  }, [playHaptic]);
 
   const expandDynamicIsland = useCallback(() => {
     setIslandState('expanded');
     playHaptic('impact_medium');
-  }, []);
+  }, [playHaptic]);
 
   const collapseDynamicIsland = useCallback(() => {
     setIslandState('compact');
     playHaptic('impact_light');
-  }, []);
+  }, [playHaptic]);
 
   const setDynamicIslandProgress = useCallback((progress: number) => {
     setIslandProgress(progress);
@@ -363,7 +353,7 @@ export function CinematicProvider({
       playHaptic('notification');
       return id;
     },
-    [showDynamicIsland]
+    [showDynamicIsland, playHaptic]
   );
 
   const updateLiveActivity = useCallback(
@@ -391,53 +381,9 @@ export function CinematicProvider({
     }, 500);
 
     playHaptic('success');
-  }, []);
+  }, [playHaptic]);
 
-  // Haptic controls
-  const playHaptic = useCallback((pattern: HapticPattern) => {
-    hapticPatterns[pattern]?.();
-  }, []);
-
-  const playHapticSequence = useCallback(
-    async (patterns: HapticPattern[], delays: number[] = []) => {
-      for (let i = 0; i < patterns.length; i++) {
-        await hapticPatterns[patterns[i]]?.();
-        if (delays[i]) {
-          await new Promise((r) => setTimeout(r, delays[i]));
-        }
-      }
-    },
-    []
-  );
-
-  // Effect triggers
-  const triggerDiscovery = useCallback((x: number, y: number, color?: string) => {
-    const id = `pulse_${Date.now()}`;
-    setDiscoveryPulses((prev) => [...prev, { id, x, y, color }]);
-    setEffectMode('discovery');
-    playHaptic('discovery');
-
-    // Auto-cleanup
-    setTimeout(() => {
-      setDiscoveryPulses((prev) => prev.filter((p) => p.id !== id));
-      setEffectMode('ambient');
-    }, 1000);
-  }, []);
-
-  const triggerWarp = useCallback((onComplete?: () => void) => {
-    warpCallback.current = onComplete || null;
-    setWarpActive(true);
-    setEffectMode('warp');
-    playHaptic('warp_jump');
-  }, []);
-
-  const handleWarpComplete = useCallback(() => {
-    setWarpActive(false);
-    setEffectMode('ambient');
-    warpCallback.current?.();
-    warpCallback.current = null;
-  }, []);
-
+  // Effect triggers (simplified - removed broken visual effects)
   const triggerCelebration = useCallback(() => {
     setEffectMode('celebrating');
     playHapticSequence(['impact_light', 'impact_medium', 'impact_heavy', 'success'], [100, 100, 100]);
@@ -450,7 +396,7 @@ export function CinematicProvider({
     playHaptic('error');
 
     setTimeout(() => setEffectMode('ambient'), 2000);
-  }, []);
+  }, [playHaptic]);
 
   // Context value
   const contextValue = useMemo<CinematicContextValue>(
@@ -470,24 +416,16 @@ export function CinematicProvider({
       activeLiveActivities: liveActivities.filter((a) => a.isActive),
       playHaptic,
       playHapticSequence,
-      triggerDiscovery,
-      triggerWarp,
       triggerCelebration,
       triggerError,
       ambientEnabled,
-      particlesEnabled,
-      starsEnabled,
       setAmbientEnabled,
-      setParticlesEnabled,
-      setStarsEnabled,
     }),
     [
       effectMode,
       intensity,
       liveActivities,
       ambientEnabled,
-      particlesEnabled,
-      starsEnabled,
       showDynamicIsland,
       hideDynamicIsland,
       expandDynamicIsland,
@@ -498,8 +436,6 @@ export function CinematicProvider({
       endLiveActivity,
       playHaptic,
       playHapticSequence,
-      triggerDiscovery,
-      triggerWarp,
       triggerCelebration,
       triggerError,
     ]
@@ -509,44 +445,7 @@ export function CinematicProvider({
     <CinematicContext.Provider value={contextValue}>
       {children}
 
-      {/* Global Effect Layers */}
-      <View style={styles.effectsContainer} pointerEvents="none">
-        {/* Ambient background effects */}
-        {ambientEnabled && effectMode !== 'idle' && (
-          <AuroraBackground
-            intensity={intensity === 'subtle' ? 0.1 : intensity === 'intense' ? 0.25 : 0.15}
-            speed={10000}
-          />
-        )}
-
-        {/* Starfield for certain modes */}
-        {starsEnabled && (effectMode === 'thinking' || effectMode === 'browsing' || effectMode === 'warp') && (
-          <Starfield
-            starCount={intensity === 'subtle' ? 30 : intensity === 'intense' ? 80 : 50}
-            speed={effectMode === 'warp' ? 3 : 1}
-            active
-          />
-        )}
-
-        {/* Discovery pulses */}
-        {discoveryPulses.map((pulse) => (
-          <DiscoveryPulse
-            key={pulse.id}
-            x={pulse.x}
-            y={pulse.y}
-            color={pulse.color || colors.accent.primary}
-          />
-        ))}
-
-        {/* Warp speed effect */}
-        <WarpSpeed
-          active={warpActive}
-          onComplete={handleWarpComplete}
-          color={colors.accent.primary}
-        />
-      </View>
-
-      {/* Dynamic Island - always on top */}
+      {/* Dynamic Island - native iOS feature */}
       <DynamicIsland
         state={islandState}
         activity={islandActivity}
@@ -714,49 +613,6 @@ export function useLiveActivity(type: LiveActivityState['type']) {
   return { start, update, end, isActive: !!activityId.current };
 }
 
-// ============================================================================
-// AMBIENT LAYER - Background visual atmosphere
-// ============================================================================
-
-interface AmbientLayerProps {
-  variant?: 'aurora' | 'stars' | 'particles' | 'full';
-  intensity?: 'subtle' | 'normal' | 'intense';
-}
-
-export function AmbientLayer({
-  variant = 'full',
-  intensity = 'subtle',
-}: AmbientLayerProps) {
-  const { colors } = useTheme();
-  const { effectMode, ambientEnabled } = useCinematic();
-
-  if (!ambientEnabled || effectMode === 'idle') return null;
-
-  const intensityMap = {
-    subtle: { particles: 8, stars: 20, aurora: 0.08 },
-    normal: { particles: 15, stars: 40, aurora: 0.15 },
-    intense: { particles: 25, stars: 60, aurora: 0.25 },
-  };
-
-  const config = intensityMap[intensity];
-
-  return (
-    <View style={styles.ambientContainer} pointerEvents="none">
-      {(variant === 'aurora' || variant === 'full') && (
-        <AuroraBackground intensity={config.aurora} />
-      )}
-      {(variant === 'stars' || variant === 'full') && (
-        <Starfield starCount={config.stars} speed={0.5} />
-      )}
-      {(variant === 'particles' || variant === 'full') && (
-        <ParticleField
-          particleCount={config.particles}
-          color={colors.accent.primary}
-        />
-      )}
-    </View>
-  );
-}
 
 // ============================================================================
 // CINEMATIC TRANSITION - Page transition wrapper
@@ -775,18 +631,16 @@ export function CinematicTransition({
   onTransitionStart,
   onTransitionEnd,
 }: CinematicTransitionProps) {
-  const { playHaptic, triggerWarp } = useCinematic();
+  const { playHaptic } = useCinematic();
   const progress = useSharedValue(0);
   const mounted = useRef(false);
 
+  // Mount-only effect - intentionally empty deps to run once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
       onTransitionStart?.();
-
-      if (variant === 'warp') {
-        triggerWarp();
-      }
 
       progress.value = withTiming(1, { duration: 400 }, (finished) => {
         if (finished) {
@@ -858,6 +712,5 @@ export default {
   useThinkingEffect,
   useBrowsingEffect,
   useLiveActivity,
-  AmbientLayer,
   CinematicTransition,
 };

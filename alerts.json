@@ -6,10 +6,11 @@
     "url": "https://philzcoffee.com",
     "goal": "Check philzcoffee.com",
     "cronExpression": "0 8 * * *",
-    "nextRun": "2025-12-21T16:00:00.410Z",
-    "enabled": true,
+    "nextRun": "2026-01-06T16:00:00.067Z",
+    "enabled": false,
     "createdAt": "2025-12-20T06:14:34.981Z",
-    "lastRun": "2025-12-20T16:01:27.409Z",
-    "lastResult": "• website analysis: • name: Philz Coffee\n\n• url: philzcoffee.com\n\n• status: fully operational\n\n• navigation: easy\n\nSECTIONS\n  • Homepage\n  • Shop\n  • Locations - several new locations coming soon\n  • Subscriptions\n  • Our Story\n\n📍 philzcoffee.com"
+    "lastRun": "2026-01-06T14:04:56.067Z",
+    "lastResult": "• company: Philz Coffee\n\n• website: philzcoffee.com\n\n• primary offerings: COFFEE BLENDS\n  • Tesora\n  • Philtered Soul\n  • Jacob's Wonderbar\n\nFORMATS\n  • 16oz bags (Whole Bean)\n  • 16oz bags (Medium grind)\n  • K-Cup® Pods\n\nOTHER\n  • customizable Coffee Subscriptions\n  • merchandise\n  • gift cards\n\n📍 locations: REGIONS\n  • California (San Francisco, Los Angeles, San Diego, and more)\n  • Chicago\n\n• features: browse specific store locations\n\n• unique features: • philz rewards: program for earning rewards through their app\n\n• sustainability: focus on sustainably sourced green beans and in-house roasting\n\n• community focus: philosophy emphasizes building community through coffee\n\nWEBSITE FUNCTIONALITY\n  • browsing the shop\n  • adding items like the Tesora blend to the cart\n  • navigating through location and About sections\n\n• summary: well-optimized for online ordering, subscription management, and finding local Philz storefronts\n\n📍 philzcoffee.com",
+    "lastResultHash": "-42a0dd5a"
   }
 ]

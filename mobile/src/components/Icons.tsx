@@ -152,6 +152,37 @@ export function SettingsIcon({ size = 'md', color, focused }: TabIconProps) {
   );
 }
 
+export function HomeIcon({ size = 'md', color, focused }: TabIconProps) {
+  const { colors } = useTheme();
+  const iconColor = color || (focused ? colors.accent.primary : colors.foreground.tertiary);
+  const iconSize = typeof size === 'number' ? size : iconSizes[size];
+
+  const scale = useSharedValue(1);
+
+  React.useEffect(() => {
+    if (focused) {
+      scale.value = withSequence(
+        withSpring(1.2, animations.spring.bouncy),
+        withSpring(1, animations.spring.gentle)
+      );
+    }
+  }, [focused]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Ionicons
+        name={focused ? 'apps' : 'apps-outline'}
+        size={iconSize}
+        color={iconColor}
+      />
+    </Animated.View>
+  );
+}
+
 // ============================================================================
 // ACTION ICONS
 // ============================================================================

@@ -1,24 +1,29 @@
 {
   "version": 1,
   "functions": {
-    "/api/cron/refresh": {
+    "/api/briefing/tinyfish": {
       "maxDuration": 60
     },
     "/api/cron/pricing": {
       "maxDuration": 300
     },
-    "/api/investor/[id]/feedback": {},
-    "/api/og/investor": {},
-    "/api/og/[id]": {},
-    "/api/investor/[id]/preferences": {},
-    "/api/investor/[id]/chat": {
+    "/api/cron/refresh": {
       "maxDuration": 60
     },
+    "/api/investor/[id]/feedback": {},
+    "/api/investor/[id]/preferences": {},
     "/api/cron/investor-news": {
       "maxDuration": 60
     },
+    "/api/og/investor": {},
+    "/api/investor/[id]/snap-apps": {},
+    "/api/og/[id]": {},
+    "/api/onboard": {},
     "/api/cron/briefings": {
       "maxDuration": 300
+    },
+    "/api/investor/[id]/chat": {
+      "maxDuration": 60
     }
   }
 }

@@ -7,22 +7,424 @@
  */
 
 import { IMessageSDK, type Message } from "@photon-ai/imessage-kit";
-import { runMinoAutomation, type MinoResult, type ProgressCallback } from "./mino";
+import { runMinoAutomation, cancelMinoOperation, hasActiveOperation, type MinoResult, type ProgressCallback } from "./mino";
 import { initGemini, chat, clearHistory, addMinoResultToHistory, toggleDebug, setLastMinoResult, getLastMinoResult, checkGuardrails, type ChatResult } from "./gemini";
 import { initImageGen, generateDataCard } from "./image-gen";
 import ios from "./ios-features";
-import scheduler, { type ScheduledAlert, hasResultChanged } from "./scheduler";
-import { getOrCreateUser, storeMessage, updateUserName, setMinoState, getMinoApiKey, getMinoAccessToken, getMinoRefreshToken, needsMinoReauth } from "./db";
+import scheduler, { type ScheduledAlert } from "./scheduler";
+import { getOrCreateUser, storeMessage, setMinoState, getMinoApiKey, getMinoAccessToken, getMinoRefreshToken, getLastProcessedMessageId, setLastProcessedMessageId, isNewUser } from "./db";
 import { startOAuthServer, generateMinoOAuthUrl, generateState, setMinoConnectedCallback, refreshAccessToken } from "./oauth-server";
 import userModel from "./user-model";
 import security from "./security";
 import mira from "./mira";
 import systemSurf from "./system-surf";
+import claudeBridge from "./claude-bridge";
+import localMac from "./local-mac";
+import { generateSnapApp, isSnapAppCandidate } from "./snap-app-agent";
+import { initMobileSync, pushSnapAppToMobile, hasMobileClient } from "./mobile-sync";
+import { initMagic, processMagicMessage, getSession as getMagicSession } from "./mino-magic";
 
 // Load environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const MINO_API_KEY = process.env.MINO_API_KEY || "";
 const ALLOWED_CONTACTS = (process.env.ALLOWED_CONTACTS || "").split(",").filter(Boolean);
+
+// Special user who can control Claude Code sessions via iMessage
+const CLAUDE_BRIDGE_USER = "+14156836861";
+
+// Mario's phone number for notifications
+const MARIO_PHONE = "+14156836861";
+
+// Contact classification
+interface ContactType {
+  type: "owner" | "known" | "new";
+  name?: string;
+}
+
+function classifyContact(phone: string): ContactType {
+  // Owner gets full access
+  if (phone === MARIO_PHONE) {
+    return { type: "owner", name: "Mario" };
+  }
+
+  // Check if this is a new contact (no prior messages)
+  if (isNewUser(phone)) {
+    return { type: "new" };
+  }
+
+  // Known contact
+  const user = getOrCreateUser(phone);
+  return { type: "known", name: user.name || undefined };
+}
+
+// Intent detection for reaching Mario
+interface ReachMarioIntent {
+  detected: boolean;
+  urgency: "low" | "medium" | "high";
+  reason?: string;
+}
+
+// Claude handoff detection for complex dev tasks
+interface ClaudeHandoffIntent {
+  detected: boolean;
+  trigger: string;
+  sessionIndex?: number;  // If targeting specific session with @1, @2
+}
+
+function detectClaudeHandoff(text: string, sender: string): ClaudeHandoffIntent {
+  // Only owner can use Claude handoff (for now)
+  if (sender !== MARIO_PHONE) {
+    return { detected: false, trigger: "" };
+  }
+
+  const textLower = text.toLowerCase();
+
+  // Explicit @claude trigger
+  if (textLower.startsWith("@claude ")) {
+    return { detected: true, trigger: "@claude" };
+  }
+
+  // Don't auto-handoff if using existing @N or #N commands
+  if (/^[@#]\d+/.test(text)) {
+    return { detected: false, trigger: "" };
+  }
+
+  // Complex dev request patterns
+  const handoffPatterns = [
+    { pattern: /\b(code\s*review|review\s*(this|my|the)\s*code)\b/i, trigger: "code review" },
+    { pattern: /\b(complex\s*analysis|deep\s*dive|analyze\s*(this|the)\s*(code|architecture))\b/i, trigger: "complex analysis" },
+    { pattern: /\b(help\s*me\s*build|let'?s\s*build|build\s*(me\s*)?a)\b/i, trigger: "help me build" },
+    { pattern: /\b(debug\s*(this|my|the)|fix\s*(this|my|the)\s*(bug|error|issue))\b/i, trigger: "debug this" },
+    { pattern: /\b(refactor|rewrite|restructure)\s+(this|my|the)\b/i, trigger: "refactor" },
+    { pattern: /\b(implement|create|write)\s+(a\s+)?(new\s+)?(feature|function|component|module)\b/i, trigger: "implement feature" },
+    { pattern: /\b(architect|design)\s+(a\s+)?(system|solution|approach)\b/i, trigger: "architecture" },
+  ];
+
+  for (const { pattern, trigger } of handoffPatterns) {
+    if (pattern.test(textLower)) {
+      return { detected: true, trigger };
+    }
+  }
+
+  return { detected: false, trigger: "" };
+}
+
+// Mac automation intent detection for inline system.surf commands
+interface MacAutomationIntent {
+  confidence: "high" | "medium" | "low";
+  friendlyAction: string;
+  category: string;
+}
+
+function detectMacAutomationIntent(text: string): MacAutomationIntent | null {
+  const textLower = text.toLowerCase().trim();
+
+  // High confidence patterns - explicit app/system commands
+  const highConfidencePatterns = [
+    { pattern: /^open\s+(\w+)/i, action: (m: RegExpMatchArray) => `Opening ${m[1]}`, category: "app" },
+    { pattern: /^launch\s+(\w+)/i, action: (m: RegExpMatchArray) => `Launching ${m[1]}`, category: "app" },
+    { pattern: /^play\s+(some\s+)?music/i, action: () => "Playing music", category: "music" },
+    { pattern: /^pause\s+(the\s+)?music/i, action: () => "Pausing music", category: "music" },
+    { pattern: /^next\s+track/i, action: () => "Skipping to next track", category: "music" },
+    { pattern: /^previous\s+track/i, action: () => "Going to previous track", category: "music" },
+    { pattern: /^set\s+(the\s+)?volume\s+to\s+(\d+)/i, action: (m: RegExpMatchArray) => `Setting volume to ${m[2]}%`, category: "system" },
+    { pattern: /^set\s+(the\s+)?brightness\s+to\s+(\d+)/i, action: (m: RegExpMatchArray) => `Setting brightness to ${m[2]}%`, category: "system" },
+    { pattern: /^(turn\s+on|enable)\s+(dark\s+mode|do\s+not\s+disturb|dnd)/i, action: (m: RegExpMatchArray) => `Enabling ${m[2]}`, category: "system" },
+    { pattern: /^(turn\s+off|disable)\s+(dark\s+mode|do\s+not\s+disturb|dnd)/i, action: (m: RegExpMatchArray) => `Disabling ${m[2]}`, category: "system" },
+    { pattern: /^(mute|unmute)(\s+the\s+computer)?/i, action: (m: RegExpMatchArray) => m[1].toLowerCase() === "mute" ? "Muting" : "Unmuting", category: "system" },
+    { pattern: /^take\s+a?\s*screenshot/i, action: () => "Taking screenshot", category: "system" },
+    { pattern: /^lock\s+(the\s+)?(screen|computer|mac)/i, action: () => "Locking screen", category: "system" },
+    { pattern: /^empty\s+(the\s+)?trash/i, action: () => "Emptying trash", category: "system" },
+  ];
+
+  // Medium confidence - natural language commands
+  const mediumConfidencePatterns = [
+    { pattern: /^(can you\s+)?play\s+(.+)\s+(on|in)\s+spotify/i, action: (m: RegExpMatchArray) => `Playing "${m[2]}" on Spotify`, category: "music" },
+    { pattern: /^search\s+(for\s+)?(.+)\s+(on|in)\s+(google|safari|chrome)/i, action: (m: RegExpMatchArray) => `Searching for "${m[2]}"`, category: "app" },
+    { pattern: /^send\s+(a\s+)?message\s+(to|via)\s+(\w+)/i, action: (m: RegExpMatchArray) => `Sending message via ${m[3]}`, category: "messaging" },
+    { pattern: /^(show|hide)\s+(the\s+)?(dock|desktop|finder)/i, action: (m: RegExpMatchArray) => `${m[1]}ing ${m[3]}`, category: "system" },
+    { pattern: /^quit\s+(\w+)/i, action: (m: RegExpMatchArray) => `Quitting ${m[1]}`, category: "app" },
+    { pattern: /^close\s+(\w+)/i, action: (m: RegExpMatchArray) => `Closing ${m[1]}`, category: "app" },
+    { pattern: /^restart\s+(\w+)/i, action: (m: RegExpMatchArray) => `Restarting ${m[1]}`, category: "app" },
+  ];
+
+  // Check high confidence first
+  for (const { pattern, action, category } of highConfidencePatterns) {
+    const match = textLower.match(pattern);
+    if (match) {
+      return { confidence: "high", friendlyAction: action(match), category };
+    }
+  }
+
+  // Check medium confidence
+  for (const { pattern, action, category } of mediumConfidencePatterns) {
+    const match = textLower.match(pattern);
+    if (match) {
+      return { confidence: "medium", friendlyAction: action(match), category };
+    }
+  }
+
+  return null;
+}
+
+// Detect intent to start Mino Magic competitive analysis flow
+function detectMagicIntent(text: string): boolean {
+  const textLower = text.toLowerCase();
+
+  // Keywords that suggest competitive analysis intent
+  const magicKeywords = [
+    "analyze",
+    "competitor",
+    "competitive",
+    "compare",
+    "comparison",
+    "pricing intel",
+    "market research",
+    "feature comparison",
+    "research",
+    "landscape",
+    "benchmark",
+    "who are",
+    "alternatives to",
+    "similar to",
+  ];
+
+  // Check for magic keywords
+  for (const keyword of magicKeywords) {
+    if (textLower.includes(keyword)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Handle automatic Claude handoff
+async function handleClaudeHandoff(
+  sender: string,
+  text: string,
+  handoffIntent: ClaudeHandoffIntent,
+  iMessage: any
+): Promise<boolean> {
+  const sessions = claudeBridge.getCachedSessions(true);
+
+  if (sessions.length === 0) {
+    // No active Claude sessions - offer to start one
+    const projects = claudeBridge.getCachedProjects(true);
+    if (projects.length > 0) {
+      await iMessage.send(sender, `🤖 That looks like a dev task, but no Claude sessions are active.\n\nAvailable projects:\n${projects.slice(0, 3).map((p, i) => `#${i + 1} ${p.name}`).join("\n")}\n\nSay #N to start a session, or I can help with simpler questions.`);
+      return true;
+    }
+    await iMessage.send(sender, `🤖 That looks like a dev task for Claude, but no sessions are active.\n\nStart a Claude session in Terminal with \`claude\` first.`);
+    return true;
+  }
+
+  // If multiple sessions, pick most recently active
+  const session = sessions[0];
+
+  console.log(`[Claude Handoff] Auto-routing to ${session.projectName} (trigger: ${handoffIntent.trigger})`);
+  await iMessage.send(sender, `🤖 Routing to Claude (${session.projectName})...\nTrigger: ${handoffIntent.trigger}`);
+
+  // Remove @claude prefix if present
+  let message = text;
+  if (text.toLowerCase().startsWith("@claude ")) {
+    message = text.slice(8).trim();
+  }
+
+  const startTime = Date.now();
+  const result = await claudeBridge.sendToSession(session, message);
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    const MAX_MSG = 1500;
+    const header = `🤖 **Claude** (${session.projectName}, ${duration}s)\n\n`;
+
+    if (result.output.length > MAX_MSG) {
+      const chunks = splitMessage(result.output, MAX_MSG - header.length);
+      await iMessage.send(sender, header + chunks[0]);
+      for (let i = 1; i < chunks.length; i++) {
+        await new Promise(r => setTimeout(r, 300));
+        await iMessage.send(sender, chunks[i]);
+      }
+    } else {
+      await iMessage.send(sender, header + result.output);
+    }
+  } else {
+    await iMessage.send(sender, `❌ Claude error: ${result.output}`);
+  }
+
+  return true;
+}
+
+function detectReachMarioIntent(text: string): ReachMarioIntent {
+  const textLower = text.toLowerCase();
+
+  // High urgency patterns
+  const urgentPatterns = [
+    /urgent/i,
+    /emergency/i,
+    /asap/i,
+    /right away/i,
+    /immediately/i,
+    /call me back/i,
+  ];
+
+  // Medium urgency patterns
+  const mediumPatterns = [
+    /can you (tell|ask|get|have) (him|mario)/i,
+    /need (to reach|to talk to|to speak with|him|mario)/i,
+    /is (mario|he) (there|available|around)/i,
+    /let (him|mario) know/i,
+    /tell (him|mario)/i,
+    /get back to me/i,
+    /reach (him|mario)/i,
+    /talk to (mario|him)/i,
+    /when (will|can) (mario|he)/i,
+  ];
+
+  // Low urgency patterns
+  const lowPatterns = [
+    /is this mario/i,
+    /looking for mario/i,
+    /this mario/i,
+    /mario('s)? (number|phone)/i,
+    /trying to (reach|contact|get)/i,
+  ];
+
+  // Check urgency levels
+  for (const pattern of urgentPatterns) {
+    if (pattern.test(textLower)) {
+      return { detected: true, urgency: "high", reason: "urgent request" };
+    }
+  }
+
+  for (const pattern of mediumPatterns) {
+    if (pattern.test(textLower)) {
+      return { detected: true, urgency: "medium", reason: "wants to reach Mario" };
+    }
+  }
+
+  for (const pattern of lowPatterns) {
+    if (pattern.test(textLower)) {
+      return { detected: true, urgency: "low", reason: "looking for Mario" };
+    }
+  }
+
+  return { detected: false, urgency: "low" };
+}
+
+// Notify Mario about someone trying to reach him
+async function notifyMario(
+  senderPhone: string,
+  message: string,
+  urgency: "low" | "medium" | "high",
+  reason?: string
+): Promise<void> {
+  const urgencyEmoji = {
+    low: "📱",
+    medium: "📞",
+    high: "🚨"
+  };
+
+  const emoji = urgencyEmoji[urgency];
+  const senderName = getOrCreateUser(senderPhone).name || senderPhone;
+
+  const notification = `${emoji} **Someone wants to reach you**
+
+From: ${senderName}
+${reason ? `Reason: ${reason}` : ""}
+
+"${message.slice(0, 200)}${message.length > 200 ? "..." : ""}"
+
+Reply to them: ${senderPhone}`;
+
+  try {
+    await iMessage.send(MARIO_PHONE, notification);
+    console.log(`📨 Notified Mario about ${senderPhone} (${urgency})`);
+  } catch (err) {
+    console.error("Failed to notify Mario:", err);
+  }
+}
+
+// Mino self-introduction for new contacts
+const MINO_INTRODUCTION = `Hello! I'm Mino - Multi-step workflows across the web. At any scale.
+
+I can help you with:
+• 🔍 Look things up online
+• 🤖 Automate web tasks
+• 🔔 Send you alerts on topics you want to track
+
+What can I help you with?`;
+
+// Contact card for Mino (sent to new users)
+const MINO_CONTACT_INFO = {
+  name: "Mino AI",
+  company: "TinyFish",
+  phone: process.env.BOT_PHONE || "",
+  email: "hello@mino.ai",
+  website: "https://mino.ai",
+  note: "AI assistant - Multi-step workflows across the web",
+};
+
+// Handle new user first contact
+async function handleNewUserIntroduction(
+  sender: string,
+  text: string
+): Promise<boolean> {
+  const contact = classifyContact(sender);
+
+  // Only handle truly new contacts
+  if (contact.type !== "new") {
+    return false;
+  }
+
+  console.log(`👋 New contact detected: ${sender}`);
+
+  // Check if they're trying to reach Mario
+  const reachIntent = detectReachMarioIntent(text);
+
+  if (reachIntent.detected) {
+    // They want to reach Mario - introduce and notify
+    await iMessage.send(sender, `Hi! I'm Mino, Mario's AI assistant.
+
+I'll let Mario know you're trying to reach him${reachIntent.urgency === "high" ? " - sounds urgent!" : "."} He'll get back to you soon.
+
+In the meantime, is there anything I can help you with?`);
+
+    // Send contact card so they see icon instead of number
+    try {
+      const contactCard = ios.generateContactCard(MINO_CONTACT_INFO);
+      await iMessage.sendFile(sender, contactCard);
+      console.log(`📇 Sent Mino contact card to new user`);
+    } catch (err) {
+      console.error("Failed to send contact card:", err);
+    }
+
+    // Notify Mario
+    await notifyMario(sender, text, reachIntent.urgency, reachIntent.reason);
+
+    // Store the interaction
+    storeMessage(sender, "assistant", "[Mino introduction + Mario notification + contact card]");
+    return true;
+  }
+
+  // Regular new user - just introduce
+  await iMessage.send(sender, MINO_INTRODUCTION);
+
+  // Send contact card so they see icon instead of number
+  try {
+    const contactCard = ios.generateContactCard(MINO_CONTACT_INFO);
+    await iMessage.sendFile(sender, contactCard);
+    console.log(`📇 Sent Mino contact card to new user`);
+  } catch (err) {
+    console.error("Failed to send contact card:", err);
+  }
+
+  storeMessage(sender, "assistant", "[Mino introduction + contact card]");
+
+  // Still process their message through the normal flow
+  return false;
+}
 
 // Validate config
 if (!GEMINI_API_KEY) {
@@ -74,7 +476,7 @@ Commands:
 /help - This menu`;
 
 // Format Mino results for iMessage - returns { text, parsedData }
-function formatMinoForIMessage(result: MinoResult, url: string, goal: string): { text: string; data: any } {
+function formatMinoForIMessage(result: MinoResult, url: string, _goal: string): { text: string; data: any } {
   const domain = new URL(url).hostname.replace("www.", "");
 
   if (result.status === "error") {
@@ -252,7 +654,7 @@ async function handleMessage(message: Message) {
   }
 
   // Ensure user exists and track interaction
-  const user = getOrCreateUser(sender);
+  getOrCreateUser(sender);  // Ensures user profile exists
   storeMessage(sender, "user", sanitizedText);
   userModel.trackInteraction(sender, sanitizedText);
 
@@ -262,6 +664,22 @@ async function handleMessage(message: Message) {
     console.log(`🛡️ Guardrail blocked: ${guardrail.reason}`);
     await iMessage.send(sender, guardrail.response || "I can't help with that.");
     return;
+  }
+
+  // Check for stop/cancel commands when user has active Mino operation
+  const stopPatterns = /^(stop|cancel|nevermind|never mind|abort|quit|nvm)$/i;
+  if (stopPatterns.test(sanitizedText.trim()) && hasActiveOperation(sender)) {
+    const cancelled = cancelMinoOperation(sender);
+    if (cancelled) {
+      console.log(`🛑 User ${sender} cancelled active Mino operation`);
+      await iMessage.send(sender, "🛑 Stopped! What would you like to do instead?");
+      return;
+    }
+  }
+
+  // Handle new user introduction (Mino self-intro + reach Mario detection)
+  if (await handleNewUserIntroduction(sender, sanitizedText)) {
+    return; // Introduction handled, message processed
   }
 
   let response: ChatResult;
@@ -309,6 +727,156 @@ async function handleMessage(message: Message) {
       const enabled = toggleDebug(sender);
       await iMessage.send(sender, enabled ? "🐟 Debug mode ON" : "🔇 Debug mode OFF");
       return;
+    } else if (text.toLowerCase() === "/cc" && sender === CLAUDE_BRIDGE_USER) {
+      // List Claude Code sessions (special user only)
+      console.log(`[Claude Bridge] Listing sessions for ${sender}`);
+      const sessions = claudeBridge.getCachedSessions(true); // Force refresh
+      const formatted = claudeBridge.formatSessionList(sessions);
+      await iMessage.send(sender, formatted);
+      return;
+    } else if (text.toLowerCase() === "/cc new" && sender === CLAUDE_BRIDGE_USER) {
+      // List available projects for starting new sessions
+      console.log(`[Claude Bridge] Listing projects for ${sender}`);
+      const projects = claudeBridge.getCachedProjects(true);
+      const formatted = claudeBridge.formatProjectList(projects);
+      await iMessage.send(sender, formatted);
+      return;
+    } else if (text.startsWith("#") && sender === CLAUDE_BRIDGE_USER) {
+      // Start new session in project (#N or #N message)
+      const parsed = claudeBridge.parseProjectSelection(text);
+      if (parsed) {
+        const project = claudeBridge.getProjectByIndex(parsed.index);
+        if (!project) {
+          await iMessage.send(sender, `❌ No project #${parsed.index}. Use /cc new to see available projects.`);
+          return;
+        }
+
+        if (project.hasActiveSession) {
+          await iMessage.send(sender, `⚠️ ${project.name} already has an active session. Use /cc to interact with it.`);
+          return;
+        }
+
+        console.log(`[Claude Bridge] Starting new session in ${project.path}`);
+        await iMessage.send(sender, `🚀 Starting new Claude session in ${project.name}...`);
+
+        const result = await claudeBridge.startNewSession(project.path, parsed.message || undefined);
+
+        if (result.success) {
+          await iMessage.send(sender, `✅ ${result.message}\n\nUse /cc in a few seconds to see the new session.`);
+        } else {
+          await iMessage.send(sender, `❌ ${result.message}`);
+        }
+        return;
+      }
+    } else if (text.startsWith("@!") && sender === CLAUDE_BRIDGE_USER) {
+      // Live tmux injection - types directly into terminal
+      // @! message - finds any Claude in tmux
+      // @!N message - targets session N specifically
+      const parsed = claudeBridge.parseLiveInjection(text);
+      if (parsed) {
+        let tty: string | undefined;
+        let targetDesc = "any Claude session";
+
+        // If index provided, look up specific session
+        if (parsed.index !== undefined) {
+          const session = claudeBridge.getSessionByIndex(parsed.index);
+          if (!session) {
+            await iMessage.send(sender, `❌ No session @${parsed.index}. Use /cc to see available sessions.`);
+            return;
+          }
+          tty = session.tty;
+          targetDesc = session.projectName;
+        }
+
+        console.log(`[Claude Bridge] Live injection to tmux (target: ${targetDesc})`);
+        await iMessage.send(sender, `⌨️ Typing into ${targetDesc}...`);
+
+        const result = await claudeBridge.injectToSessionLive(parsed.message, tty);
+
+        if (result.success) {
+          await iMessage.send(sender, result.output);
+        } else {
+          await iMessage.send(sender, `❌ ${result.output}`);
+        }
+        return;
+      }
+    } else if (text.startsWith("@@") && sender === CLAUDE_BRIDGE_USER) {
+      // Direct session injection (bypasses EXCLUDED_DIRS for this session)
+      const parsed = claudeBridge.parseDirectInjection(text);
+      if (parsed) {
+        console.log(`[Claude Bridge] Direct injection to ${parsed.sessionId}`);
+        await iMessage.send(sender, `📤 Injecting into session ${parsed.sessionId.slice(0, 8)}...`);
+
+        const startTime = Date.now();
+        const result = await claudeBridge.sendToSessionDirect(
+          parsed.sessionId,
+          process.cwd(),
+          parsed.message
+        );
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        if (result.success) {
+          const MAX_MSG = 1500;
+          const header = `✅ **Direct** (${duration}s)\n\n`;
+          if (result.output.length > MAX_MSG) {
+            const chunks = splitMessage(result.output, MAX_MSG - header.length);
+            await iMessage.send(sender, header + chunks[0]);
+            for (let i = 1; i < chunks.length; i++) {
+              await new Promise(r => setTimeout(r, 300));
+              await iMessage.send(sender, chunks[i]);
+            }
+          } else {
+            await iMessage.send(sender, header + result.output);
+          }
+        } else {
+          await iMessage.send(sender, `❌ ${result.output}`);
+        }
+        return;
+      }
+    } else if (text.startsWith("@") && sender === CLAUDE_BRIDGE_USER) {
+      // Route message to Claude Code session (special user only)
+      const parsed = claudeBridge.parseTargetedMessage(text);
+      if (parsed) {
+        const session = claudeBridge.getSessionByIndex(parsed.index);
+        if (!session) {
+          await iMessage.send(sender, `❌ No session @${parsed.index}. Use /cc to see available sessions.`);
+          return;
+        }
+
+        // Handle preview request (@N?)
+        if (parsed.isPreview) {
+          const preview = claudeBridge.formatSessionPreview(session);
+          await iMessage.send(sender, preview);
+          return;
+        }
+
+        console.log(`[Claude Bridge] Routing to session @${parsed.index} (${session.projectName})`);
+        await iMessage.send(sender, `📤 Sending to ${session.projectName}...`);
+
+        const startTime = Date.now();
+        const result = await claudeBridge.sendToSession(session, parsed.message);
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        if (result.success) {
+          // Split long responses
+          const MAX_MSG = 1500;
+          const header = `✅ **${session.projectName}** (${duration}s)\n\n`;
+
+          if (result.output.length > MAX_MSG) {
+            const chunks = splitMessage(result.output, MAX_MSG - header.length);
+            await iMessage.send(sender, header + chunks[0]);
+            for (let i = 1; i < chunks.length; i++) {
+              await new Promise(r => setTimeout(r, 300));
+              await iMessage.send(sender, chunks[i]);
+            }
+          } else {
+            await iMessage.send(sender, header + result.output);
+          }
+        } else {
+          await iMessage.send(sender, `❌ ${result.output}`);
+        }
+        return;
+      }
     } else if (text.toLowerCase() === "/memory" || text.toLowerCase() === "/memories") {
       const stats = mira.getStatus(sender);
       const recentMemories = mira.getRecentMemories(sender, 5);
@@ -365,7 +933,7 @@ async function handleMessage(message: Message) {
         try {
           const audioPath = await ios.generateVoiceMessage(voiceText);
           await iMessage.sendFile(sender, audioPath);
-        } catch (err) {
+        } catch {
           await iMessage.send(sender, "❌ Voice generation failed");
         }
       }
@@ -432,8 +1000,8 @@ async function handleMessage(message: Message) {
       return;
     }
 
-    // System.surf commands (Mario only)
-    if (text.toLowerCase().startsWith("/system") || text.startsWith("@system ")) {
+    // System.surf commands (Mario only) - /system for management
+    if (text.toLowerCase().startsWith("/system")) {
       if (!systemSurf.isAuthorized(sender)) {
         await iMessage.send(sender, "⚠️ System.surf is not available for your account.");
         return;
@@ -444,74 +1012,86 @@ async function handleMessage(message: Message) {
         return;
       }
 
-      const isAtTrigger = text.startsWith("@system ");
-      const command = isAtTrigger ? text.slice(8).trim() : text.slice(7).trim();
+      const command = text.slice(7).trim();
 
-      // Handle specific /system subcommands
-      if (!isAtTrigger) {
-        if (command === "" || command === "help") {
-          await iMessage.send(sender, `🖥️ **System.surf Commands**
+      if (command === "" || command === "help") {
+        await iMessage.send(sender, `🖥️ **System.surf**
 
-/system [command] - Execute Mac command
+Just tell me what to do on your Mac:
+• "open spotify"
+• "play some music"
+• "set brightness to 50%"
+• "turn on dark mode"
+• "search for flights to NYC"
+
+Management:
 /system schedules - View scheduled tasks
-/system reset - Reset conversation state
-
-Or use @system [command] for quick access:
-@system open spotify
-@system play music
-@system set brightness to 50%
-@system turn on dark mode`);
-          return;
-        }
-
-        if (command === "schedules") {
-          try {
-            const schedules = await systemSurf.getSchedules();
-            await iMessage.send(sender, systemSurf.formatSchedules(schedules));
-          } catch (err) {
-            await iMessage.send(sender, `❌ Failed to get schedules: ${err instanceof Error ? err.message : "Unknown error"}`);
-          }
-          return;
-        }
-
-        if (command === "reset") {
-          try {
-            await systemSurf.reset();
-            await iMessage.send(sender, "✅ System.surf conversation reset.");
-          } catch (err) {
-            await iMessage.send(sender, `❌ Failed to reset: ${err instanceof Error ? err.message : "Unknown error"}`);
-          }
-          return;
-        }
-
-        if (command.startsWith("delete schedule ")) {
-          const id = command.slice(16).trim();
-          try {
-            const success = await systemSurf.deleteSchedule(id);
-            if (success) {
-              await iMessage.send(sender, `✅ Deleted schedule ${id}`);
-            } else {
-              await iMessage.send(sender, `❌ Schedule ${id} not found`);
-            }
-          } catch (err) {
-            await iMessage.send(sender, `❌ Failed to delete schedule: ${err instanceof Error ? err.message : "Unknown error"}`);
-          }
-          return;
-        }
+/system reset - Reset conversation`);
+        return;
       }
 
-      // Execute command via system.surf
-      if (command) {
-        await iMessage.send(sender, `🖥️ Executing: "${command}"...`);
+      if (command === "schedules") {
         try {
-          const response = await systemSurf.chat(command);
-          await iMessage.send(sender, systemSurf.formatResponse(response));
-          console.log(`🖥️ System.surf executed for ${sender}: ${command}`);
+          const schedules = await systemSurf.getSchedules();
+          await iMessage.send(sender, systemSurf.formatSchedules(schedules));
         } catch (err) {
-          await iMessage.send(sender, `❌ System.surf error: ${err instanceof Error ? err.message : "Unknown error"}`);
+          await iMessage.send(sender, `❌ Failed to get schedules: ${err instanceof Error ? err.message : "Unknown error"}`);
         }
+        return;
+      }
+
+      if (command === "reset") {
+        try {
+          await systemSurf.reset();
+          await iMessage.send(sender, "✅ System.surf conversation reset.");
+        } catch (err) {
+          await iMessage.send(sender, `❌ Failed to reset: ${err instanceof Error ? err.message : "Unknown error"}`);
+        }
+        return;
+      }
+
+      if (command.startsWith("delete schedule ")) {
+        const id = command.slice(16).trim();
+        try {
+          const success = await systemSurf.deleteSchedule(id);
+          if (success) {
+            await iMessage.send(sender, `✅ Deleted schedule ${id}`);
+          } else {
+            await iMessage.send(sender, `❌ Schedule ${id} not found`);
+          }
+        } catch (err) {
+          await iMessage.send(sender, `❌ Failed to delete schedule: ${err instanceof Error ? err.message : "Unknown error"}`);
+        }
+        return;
+      }
+
+      // Direct command via /system
+      await iMessage.send(sender, `🖥️ ${command}...`);
+      try {
+        const response = await systemSurf.chat(command);
+        await iMessage.send(sender, systemSurf.formatResponse(response));
+        console.log(`🖥️ System.surf executed for ${sender}: ${command}`);
+      } catch (err) {
+        await iMessage.send(sender, `❌ System.surf error: ${err instanceof Error ? err.message : "Unknown error"}`);
       }
       return;
+    }
+
+    // Inline Mac automation detection (Mario only) - now local via Gemini + AppleScript
+    if (localMac.isAuthorized(sender) && localMac.isConfigured()) {
+      const macIntent = detectMacAutomationIntent(text);
+      if (macIntent) {
+        console.log(`🖥️ Mac automation detected: "${text}" -> ${macIntent.confidence}`);
+        await iMessage.send(sender, `🖥️ ${macIntent.friendlyAction}...`);
+        try {
+          const result = await localMac.runCommand(text);
+          await iMessage.send(sender, result.message);
+          console.log(`🖥️ Local Mac executed for ${sender}: ${text}`);
+        } catch (err) {
+          await iMessage.send(sender, `❌ Mac automation error: ${err instanceof Error ? err.message : "Unknown error"}`);
+        }
+        return;
+      }
     }
 
     // Check if user is responding to image gen prompt
@@ -533,6 +1113,33 @@ Or use @system [command] for quick access:
     if (alertMatch) {
       await handleNaturalAlertRequest(sender, text, alertMatch);
       return;
+    }
+
+    // Check for Mino Magic flow (URL-based competitive analysis)
+    const magicSession = getMagicSession(sender);
+    const hasUrl = /https?:\/\/[^\s]+|(?:www\.)?[a-z0-9][-a-z0-9]*\.[a-z]{2,}/i.test(text);
+
+    // Route to magic flow if user has active session OR sends a URL with "analyze" intent
+    if (magicSession || (hasUrl && detectMagicIntent(text))) {
+      console.log(`✨ Routing to Mino Magic flow (session: ${magicSession ? "active" : "new"})`);
+      const handled = await processMagicMessage(
+        sender,
+        text,
+        async (msg) => { await iMessage.send(sender, msg); },
+        async (file) => { await iMessage.sendFile(sender, file); }
+      );
+      if (handled) {
+        storeMessage(sender, "assistant", "[Mino Magic flow response]");
+        return;
+      }
+    }
+
+    // Check for Claude handoff triggers (owner only, complex dev tasks)
+    const claudeHandoff = detectClaudeHandoff(sanitizedText, sender);
+    if (claudeHandoff.detected) {
+      if (await handleClaudeHandoff(sender, sanitizedText, claudeHandoff, iMessage)) {
+        return;
+      }
     }
 
     // Chat with Gemini (agentic chain)
@@ -559,7 +1166,7 @@ Or use @system [command] for quick access:
             const audioPath = await ios.generateVoiceMessage(response.voiceRequest.text);
             await iMessage.sendFile(sender, audioPath);
             console.log(`🎙️ Sent voice message`);
-          } catch (err) {
+          } catch {
             await iMessage.send(sender, "❌ Voice generation failed");
           }
           return;
@@ -705,7 +1312,7 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
   ];
 
   // Progress callback to update user
-  const onProgress: ProgressCallback = async (message) => {
+  const onProgress: ProgressCallback = async (_message) => {
     const now = Date.now();
     if (now - lastUpdate >= MIN_UPDATE_INTERVAL) {
       lastUpdate = now;
@@ -721,11 +1328,18 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
 
   let result;
   try {
-    result = await runMinoAutomation(apiKey, url, request.goal, onProgress);
+    result = await runMinoAutomation(apiKey, url, request.goal, onProgress, sender);
     console.log(`📦 Mino raw result:`, JSON.stringify(result, null, 2));
   } catch (err) {
     console.error("Mino automation failed:", err);
     await iMessage.send(sender, `❌ Couldn't access ${domain}. The site might be down or blocking automation. Try again later?`);
+    return;
+  }
+
+  // Handle cancelled operations (user sent stop/cancel command)
+  if (result.status === "cancelled") {
+    console.log(`🛑 Mino operation was cancelled for ${sender}`);
+    // User already received cancellation confirmation from stop command handler
     return;
   }
 
@@ -741,6 +1355,28 @@ async function handleMinoRequest(request: { url: string; goal: string }, sender:
       () => sendSmartIOSFeatures(sender, data, request.goal, url),
       "sendSmartIOSFeatures"
     );
+
+    // Generate Snap App and send via iMessage
+    if (isSnapAppCandidate(data)) {
+      await withErrorBoundary(async () => {
+        const snapApp = await generateSnapApp(url, request.goal, data);
+        if (snapApp) {
+          // Build Snap App URL for sharing
+          const SNAP_APP_BASE_URL = process.env.SNAP_APP_URL || "https://snap-apps.minnow.so";
+          const snapAppUrl = `${SNAP_APP_BASE_URL}/app/${snapApp.id}`;
+
+          // Send rich preview with link
+          await iMessage.send(sender, `✨ **${snapApp.title}**\n${snapApp.subtitle || ""}\n\n📱 Tap to view: ${snapAppUrl}`);
+
+          // Also push to mobile if connected
+          if (hasMobileClient(sender)) {
+            await pushSnapAppToMobile(sender, snapApp);
+          }
+
+          console.log(`✨ Snap App delivered: ${snapApp.type} - "${snapApp.title}" → ${snapAppUrl}`);
+        }
+      }, "generateSnapApp");
+    }
   }
 
   addMinoResultToHistory(sender, text);
@@ -1040,7 +1676,7 @@ async function runScheduledAlert(alert: ScheduledAlert): Promise<void> {
 
   try {
     const result = await runMinoAutomation(apiKey, alert.url, alert.goal);
-    const { text, data } = formatMinoForIMessage(result, alert.url, alert.goal);
+    const { text } = formatMinoForIMessage(result, alert.url, alert.goal);
 
     // Check if result changed (returns { changed, alert })
     const { changed } = scheduler.updateAlertAfterRun(alert.id, text);
@@ -1209,7 +1845,7 @@ function extractContact(data: any): { name: string; phone?: string; email?: stri
 }
 
 // Helper: Generate relevant deep link
-function generateRelevantDeepLink(data: any, goal: string, url: string): string | null {
+function generateRelevantDeepLink(data: any, goal: string, _url: string): string | null {
   // Restaurant/food - Yelp or OpenTable
   if (goal.includes("restaurant") || goal.includes("food") || goal.includes("eat")) {
     const name = Array.isArray(data) ? data[0]?.name : data?.name;
@@ -1455,7 +2091,7 @@ async function handleNaturalAlertRequest(
   }
 
   // We have context from the last Mino request
-  const { url, goal, data } = lastResult;
+  const { url, goal } = lastResult;
   const domain = new URL(url).hostname.replace("www.", "");
 
   // Parse schedule if provided
@@ -1576,6 +2212,74 @@ async function sendMorningBrief(phone: string, alerts: ScheduledAlert[]): Promis
   console.log(`✅ Sent morning brief to ${phone}`);
 }
 
+// Replay any missed messages since last run
+async function replayMissedMessages(): Promise<number> {
+  const lastProcessedId = getLastProcessedMessageId();
+
+  if (lastProcessedId === 0) {
+    // First run - don't replay, just start fresh
+    console.log("📝 First run - no messages to replay");
+    return 0;
+  }
+
+  console.log(`🔄 Checking for missed messages (last processed ID: ${lastProcessedId})...`);
+
+  try {
+    // Query messages from the last hour to catch any missed
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const result = await iMessage.getMessages({
+      since: oneHourAgo,
+      excludeOwnMessages: true,
+      limit: 50,
+    });
+
+    // Filter to only messages we haven't processed
+    const missedMessages = result.messages.filter(msg => {
+      const msgId = parseInt(msg.id, 10);
+      return msgId > lastProcessedId;
+    });
+
+    if (missedMessages.length === 0) {
+      console.log("✅ No missed messages to replay");
+      return 0;
+    }
+
+    console.log(`📨 Found ${missedMessages.length} missed messages to replay`);
+
+    // Process in order (oldest first)
+    const sortedMessages = [...missedMessages].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    for (const msg of sortedMessages) {
+      // Security check
+      const sender = msg.sender;
+      if (ALLOWED_CONTACTS.length > 0 && !ALLOWED_CONTACTS.includes(sender)) {
+        console.log(`⚠️ Skipping blocked contact: ${sender}`);
+        continue;
+      }
+
+      console.log(`🔄 Replaying: "${msg.text?.slice(0, 50)}..." from ${sender}`);
+
+      try {
+        await handleMessage(msg);
+        // Track this message as processed
+        const msgId = parseInt(msg.id, 10);
+        if (msgId > getLastProcessedMessageId()) {
+          setLastProcessedMessageId(msgId);
+        }
+      } catch (err) {
+        console.error(`❌ Error replaying message:`, err);
+      }
+    }
+
+    return missedMessages.length;
+  } catch (err) {
+    console.error("❌ Failed to replay missed messages:", err);
+    return 0;
+  }
+}
+
 // Start the bot
 async function main() {
   console.log(`
@@ -1590,6 +2294,20 @@ async function main() {
 
   // Initialize MIRA (memory, events, tools)
   mira.initMira();
+
+  // Initialize Mino Magic flow
+  if (GEMINI_API_KEY) {
+    initMagic(GEMINI_API_KEY);
+    console.log("✨ Mino Magic flow initialized");
+  }
+
+  // Initialize local Mac automation (Gemini + AppleScript)
+  if (GEMINI_API_KEY) {
+    localMac.initLocalMac(GEMINI_API_KEY);
+  }
+
+  // Start Mobile Sync WebSocket server for Snap Apps
+  initMobileSync();
 
   // Start OAuth server
   await startOAuthServer();
@@ -1614,12 +2332,32 @@ async function main() {
     console.log(`⚠️ No ALLOWED_CONTACTS - responding to everyone!`);
   }
 
+  // Replay any missed messages before starting watcher
+  const replayed = await replayMissedMessages();
+  if (replayed > 0) {
+    console.log(`✅ Replayed ${replayed} missed messages`);
+  }
+
   console.log(`\n👀 Watching for messages...\n`);
 
-  // Watch for messages
+  // Watch for messages with tracking
   await iMessage.startWatching({
-    onNewMessage: handleMessage,
-    onGroupMessage: handleMessage,
+    onNewMessage: async (message) => {
+      await handleMessage(message);
+      // Track this message as processed
+      const msgId = parseInt(message.id, 10);
+      if (!isNaN(msgId)) {
+        setLastProcessedMessageId(msgId);
+      }
+    },
+    onGroupMessage: async (message) => {
+      await handleMessage(message);
+      // Track this message as processed
+      const msgId = parseInt(message.id, 10);
+      if (!isNaN(msgId)) {
+        setLastProcessedMessageId(msgId);
+      }
+    },
     onError: (error) => console.error("Watcher error:", error),
   });
 

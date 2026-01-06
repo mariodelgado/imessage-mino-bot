@@ -30,10 +30,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useMinoStore } from '../stores/minoStore';
 import { useTheme } from '../theme';
-import {
-  useBrowsingEffect,
-  AmbientLayer,
-} from '../components/CinematicEffects';
+import { useBrowsingEffect } from '../components/CinematicEffects';
 import {
   LiquidGlassCard,
   AnimatedPressable,
@@ -459,6 +456,7 @@ export default function MinoBrowserScreen() {
     } else if (session.status === 'error') {
       completeBrowsing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.status, session?.url, startBrowsing, completeBrowsing]);
 
   const handleStop = useCallback(() => {
@@ -474,8 +472,6 @@ export default function MinoBrowserScreen() {
         style={[styles.container, { backgroundColor: colors.background.primary }]}
         edges={['top']}
       >
-        {/* Subtle ambient background */}
-        <AmbientLayer variant="aurora" intensity="subtle" />
         <EmptyState />
       </SafeAreaView>
     );
@@ -486,9 +482,6 @@ export default function MinoBrowserScreen() {
       style={[styles.container, { backgroundColor: colors.background.primary }]}
       edges={['top']}
     >
-      {/* Ambient browsing atmosphere */}
-      <AmbientLayer variant="aurora" intensity="subtle" />
-
       {/* Header */}
       <Header
         goal={session.goal}

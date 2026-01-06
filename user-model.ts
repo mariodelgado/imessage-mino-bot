@@ -344,9 +344,12 @@ export function updateProfileName(phone: string, name: string): void {
 // INTERACTION TRACKING
 // ============================================================================
 
-let currentSessions = new Map<string, { id: string; startTime: number; messageCount: number }>();
+const currentSessions = new Map<string, { id: string; startTime: number; messageCount: number }>();
 
 export function trackInteraction(phone: string, message: string): void {
+  // Ensure user profile exists first (for foreign key constraints)
+  getOrCreateProfile(phone);
+
   const now = new Date();
   const hour = now.getHours();
   const day = now.getDay();
@@ -444,7 +447,7 @@ export function trackInteraction(phone: string, message: string): void {
   updateActivityPatterns(phone, hour, day);
 }
 
-function updateActivityPatterns(phone: string, hour: number, day: number): void {
+function updateActivityPatterns(phone: string, _hour: number, _day: number): void {
   // Get recent interactions to compute patterns
   const recentHours = db.prepare(`
     SELECT hour_of_day, COUNT(*) as count FROM user_interactions

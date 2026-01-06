@@ -45,8 +45,8 @@ export function toggleDebug(contactId: string): boolean {
 }
 
 export function isDebugEnabled(contactId: string): boolean {
-  // Debug ON by default for now
-  return debugMode.get(contactId) ?? true;
+  // Debug OFF by default - user can enable with /debug
+  return debugMode.get(contactId) ?? false;
 }
 
 let vertexAI: VertexAI | null = null;
@@ -254,7 +254,7 @@ function getSearchModel(): GenerativeModel {
 
   return vertexAI.getGenerativeModel({
     model: GEMINI_MODEL,
-    tools: [{ googleSearch: {} }],
+    tools: [{ googleSearch: {} } as any],
     generationConfig: {
       temperature: 0.3,
       maxOutputTokens: 1000,
@@ -287,11 +287,12 @@ function getMinoModel(): GenerativeModel {
   });
 }
 
-function getChatModel(phone: string): GenerativeModel {
+function getChatModel(phone: string, introductionAlreadySent: boolean = false): GenerativeModel {
   if (!vertexAI) throw new Error("Vertex AI not initialized");
 
   const user = getUserByPhone(phone);
   const isNew = isNewUser(phone);
+  const messageCount = userModel.getOrCreateProfile(phone).totalMessages;
 
   // Get personalization context from user model
   const profile = userModel.getOrCreateProfile(phone);
@@ -305,7 +306,9 @@ function getChatModel(phone: string): GenerativeModel {
   // Dynamic response length based on user preference
   const maxChars = responseLength === "brief" ? 200 : responseLength === "detailed" ? 800 : 500;
 
-  let systemInstruction = `You are Mino, a friendly AI assistant on iMessage.
+  // Core identity: Mino is Mario's AI assistant
+  let systemInstruction = `You are Mino, Mario's AI assistant on iMessage.
+You help people who text Mario by answering questions, browsing websites for info, and passing along messages.
 Keep responses concise (under ${maxChars} chars) - this is texting!
 `;
 
@@ -332,9 +335,19 @@ Keep responses concise (under ${maxChars} chars) - this is texting!
     systemInstruction += `\n${userContext}\n`;
   }
 
-  if (isNew) {
-    systemInstruction += `\nThis is a NEW user! Introduce yourself warmly. Ask for their name.
-Example: "Hey! I'm Mino, your AI assistant. I can answer questions, look up info, browse websites, and more. What's your name?"
+  // Handle new vs. returning users
+  if (isNew && !introductionAlreadySent) {
+    // First contact - but introduction is handled by handleNewUserIntroduction() in index.ts
+    // This branch is a fallback in case the introduction flow is bypassed
+    systemInstruction += `\nThis is a NEW user contacting Mario's number for the first time.
+Since you've already introduced yourself, focus on being helpful.
+If they haven't shared their name yet, you can ask naturally.
+`;
+  } else if (isNew && messageCount <= 2) {
+    // Very early in conversation - introduction was already sent via handleNewUserIntroduction
+    systemInstruction += `\nThis user JUST met you. You've already introduced yourself as Mino (Mario's AI assistant).
+Now focus on being helpful and answering their question.
+If they haven't shared their name yet, you can ask naturally after helping them.
 `;
   } else if (user?.name) {
     systemInstruction += `User's name: ${user.name}. Address them by name naturally in your responses.\n`;
@@ -429,7 +442,7 @@ JSON response (include only relevant fields):
   return { action: "chat", reasoning: "fallback" };
 }
 
-async function searchAgent(query: string, phone: string): Promise<string> {
+export async function searchAgent(query: string, phone: string): Promise<string> {
   const debug = isDebugEnabled(phone);
   if (debug) {
     console.log(`├─────────────────────────────────────┤`);
@@ -728,7 +741,7 @@ export async function chat(contactId: string, message: string): Promise<ChatResu
 // UTILITIES
 // ============================================================================
 
-export function initGemini(apiKey: string) {
+export function initGemini(_apiKey: string) {
   const projectId = process.env.GCP_PROJECT_ID;
   const location = process.env.GCP_LOCATION || "us-central1";
 

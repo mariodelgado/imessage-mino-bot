@@ -26,6 +26,102 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/briefing/tinyfish": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/briefing/tinyfish",
+      "dataRoute": "/briefing/tinyfish.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/",
+      "dataRoute": "/index.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "dataRoute": "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/investor/ece30471-dff9-448e-81f5-6f0286b00a34": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34",
+      "dataRoute": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/subscribe": {
       "experimentalBypassFor": [
         {
@@ -73,85 +169,13 @@
         "x-next-revalidated-tags",
         "x-next-revalidate-tag-token"
       ]
-    },
-    "/investor/ece30471-dff9-448e-81f5-6f0286b00a34": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34",
-      "dataRoute": "/investor/ece30471-dff9-448e-81f5-6f0286b00a34.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479",
-      "dataRoute": "/investor/f47ac10b-58cc-4372-a567-0e02b2c3d479.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/",
-      "dataRoute": "/index.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
     }
   },
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "5854c69b23491d37bc1caa0be43836fc",
-    "previewModeSigningKey": "1cd5e7e8874de70842c546dfa0cdc2242fd0a9ddb7be8b4d2c6d6093fd7656ee",
-    "previewModeEncryptionKey": "4e522bdb31435df1419ad2efca87d6606ed55fd89818b7a7a3c061651370fe29"
+    "previewModeId": "9e9afa20a5c5575465f49ec6ef2ec631",
+    "previewModeSigningKey": "7d6f3fbc100d45fb8467fe48757c19975634fc6aaba071e75acc3d74b08bd03b",
+    "previewModeEncryptionKey": "94d7fa57e42eb55511c9e243a2f0c8f2acae6818a521aecea40d6fd396f5fc00"
   }
 }

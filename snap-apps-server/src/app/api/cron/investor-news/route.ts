@@ -6,24 +6,12 @@
  * Runs daily at 6 AM PST via Vercel Cron.
  *
  * GET /api/cron/investor-news - Refresh portfolio company news
+ * GET /api/cron/investor-news?investorId=xxx - Fetch news for specific investor
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Portfolio companies to track for Ryan Koh
-const PORTFOLIO_COMPANIES = [
-  { name: "TinyFish", sector: "AI/ML", keywords: ["TinyFish AI", "TinyFish startup"] },
-  { name: "Statsig", sector: "DevTools", keywords: ["Statsig", "Statsig OpenAI"] },
-  { name: "Adaptive ML", sector: "AI/ML", keywords: ["Adaptive ML", "Adaptive machine learning startup"] },
-  { name: "Pinecone", sector: "Infrastructure", keywords: ["Pinecone vector database", "Pinecone AI"] },
-  { name: "Groww", sector: "Fintech", keywords: ["Groww fintech", "Groww India"] },
-  { name: "Spotnana", sector: "Travel Tech", keywords: ["Spotnana", "Spotnana travel"] },
-  { name: "Unit21", sector: "Fintech", keywords: ["Unit21", "Unit21 fraud"] },
-  { name: "Reprise", sector: "Sales Tech", keywords: ["Reprise demo", "Reprise software"] },
-  { name: "Highspot", sector: "Sales Tech", keywords: ["Highspot", "Highspot sales enablement"] },
-  { name: "Sendbird", sector: "Communications", keywords: ["Sendbird", "Sendbird chat API"] },
-];
+import { getInvestor, getInvestorCompanyNames, getAllCompanyNames } from "@/lib/investors";
 
 interface NewsItem {
   company: string;
@@ -42,14 +30,54 @@ const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
+    // Check for internal request (from brief API)
+    const isInternalRequest = request.headers.get("x-internal-request") === "true";
+
+    // Verify cron secret (skip for internal requests)
     const authHeader = request.headers.get("authorization");
 
-    if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!isInternalRequest && CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
       );
+    }
+
+    // Get investorId from query params
+    const { searchParams } = new URL(request.url);
+    const investorId = searchParams.get("investorId");
+
+    // Get company names based on investorId
+    let companyNames: string[];
+    let investorName: string | undefined;
+
+    if (investorId) {
+      const investor = getInvestor(investorId);
+      if (!investor) {
+        return NextResponse.json(
+          { success: false, error: "Investor not found" },
+          { status: 404 }
+        );
+      }
+      companyNames = getInvestorCompanyNames(investorId);
+      investorName = investor.name;
+
+      if (companyNames.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            news: [],
+            fetchedAt: new Date().toISOString(),
+            companiesTracked: 0,
+            investorId,
+            investorName,
+            message: "No portfolio companies configured",
+          },
+        });
+      }
+    } else {
+      // Fetch news for all companies across all investors
+      companyNames = getAllCompanyNames();
     }
 
     const geminiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -71,7 +99,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Use Gemini with Google Search grounding to find recent news
-    const companyList = PORTFOLIO_COMPANIES.map(c => c.name).join(", ");
+    const companyList = companyNames.join(", ");
 
     const prompt = `Find the most recent and important business news from the past 7 days for these companies: ${companyList}
 
@@ -104,8 +132,17 @@ Return a JSON array of news items. Only include verified recent news with real s
 
     const responseText = result.response.text();
 
-    // Extract JSON from response
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+    // Extract JSON from response - handle markdown code blocks
+    let jsonString = responseText;
+
+    // Remove markdown code block markers if present
+    const codeBlockMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1];
+    }
+
+    // Find the JSON array
+    const jsonMatch = jsonString.match(/\[[\s\S]*\]/);
     let newsItems: NewsItem[] = [];
 
     if (jsonMatch) {
@@ -122,7 +159,9 @@ Return a JSON array of news items. Only include verified recent news with real s
       data: {
         news: newsItems,
         fetchedAt: new Date().toISOString(),
-        companiesTracked: PORTFOLIO_COMPANIES.length,
+        companiesTracked: companyNames.length,
+        ...(investorId && { investorId }),
+        ...(investorName && { investorName }),
       },
     });
   } catch (error) {

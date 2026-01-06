@@ -1,9 +1,9 @@
 ---
 active: true
 iteration: 1
-max_iterations: 100
+max_iterations: 10
 completion_promise: null
-started_at: "2026-01-04T19:10:05Z"
+started_at: "2026-01-05T18:37:29Z"
 ---
 
-do it all and test comprehensively, do linting as well.
+yes do that

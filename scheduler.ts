@@ -182,7 +182,9 @@ export function parseSchedule(input: string): { cron: string; description: strin
 
 // Calculate next run time from cron expression
 function getNextRunTime(cronExpr: string): Date {
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = cronExpr.split(" ");
+  const parts = cronExpr.split(" ");
+  const minute = parts[0];
+  const hour = parts[1];
   const now = new Date();
   const next = new Date(now);
 

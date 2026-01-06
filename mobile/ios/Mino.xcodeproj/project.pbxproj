@@ -7,47 +7,77 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		068A6CD2521642DE96B9203B /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7AAF930D434E19A8B0DD3F /* Color+hex.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		068A6CD2521642DE96B9203B /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7AAF930D434E19A8B0DD3F /* Color+hex.swift */; };
-		C6C90AFCB86E429985BA24C6 /* Date+toTimerInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8EDB4AAF9645848A6B56FC /* Date+toTimerInterval.swift */; };
-		E8C5DC44453A4D05ABFA5722 /* Image+dynamic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96BC252D6F56488C84442AD6 /* Image+dynamic.swift */; };
+		3FF9ADAF82274CAF9F2DCB6F /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDBD3B08397D4647A61FCBE9 /* LiveActivityWidgetBundle.swift */; };
 		4F3CEC3D1580445397958DEB /* LiveActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99DA047289D4959B06978DA /* LiveActivityView.swift */; };
 		6E6E0FBE9A3A472AA3AAB1B5 /* LiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C2922126D314ED8AE05560A /* LiveActivityWidget.swift */; };
-		3FF9ADAF82274CAF9F2DCB6F /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDBD3B08397D4647A61FCBE9 /* LiveActivityWidgetBundle.swift */; };
-		7F3D90674D804C738329F440 /* View+applyIfPresent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73408A23B25F4E929B23DA41 /* View+applyIfPresent.swift */; };
-		BFBE4A436D364C0B8F15DAE0 /* View+applyWidgetURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A392AF53E8041F289780C45 /* View+applyWidgetURL.swift */; };
-		7836D8F449CB4E00BA2BF617 /* ViewHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C73BA5BC5F4F06AAE3226D /* ViewHelpers.swift */; };
 		734EE8D7830540909F464F9E /* LiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA8215CBBBBE43B487D01A2A /* LiveActivity.appex */; };
+		7836D8F449CB4E00BA2BF617 /* ViewHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C73BA5BC5F4F06AAE3226D /* ViewHelpers.swift */; };
 		7ABF957A20C44C0F89793DD7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27857983AED74361B91BACC3 /* Assets.xcassets */; };
-		5C3DA6CE60204D909BDB0BC4 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6740C701A2EF44B6B365FDC9 /* Info.plist */; };
-		5AA11642E9254B2CACA80569 /* LiveActivity.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = AFD16A1286C24BB8856221AB /* LiveActivity.entitlements */; };
+		7F3D90674D804C738329F440 /* View+applyIfPresent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73408A23B25F4E929B23DA41 /* View+applyIfPresent.swift */; };
+		7FF0EAEDDF8EE6EA92F50918 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E84A6CDEE13846F60D318F74 /* PrivacyInfo.xcprivacy */; };
+		973155DB9B6A0295560ED65C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA14E50F96504C80B70F71A /* ExpoModulesProvider.swift */; };
+		B7E41FA7A42E4FFCA48606AE /* libPods-Mino.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 750957877FB0F655CB9124A1 /* libPods-Mino.a */; };
+		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BFBE4A436D364C0B8F15DAE0 /* View+applyWidgetURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A392AF53E8041F289780C45 /* View+applyWidgetURL.swift */; };
+		C6C90AFCB86E429985BA24C6 /* Date+toTimerInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8EDB4AAF9645848A6B56FC /* Date+toTimerInterval.swift */; };
+		E8C5DC44453A4D05ABFA5722 /* Image+dynamic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96BC252D6F56488C84442AD6 /* Image+dynamic.swift */; };
+		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		E290F7685A9747F49D5931F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C787F26615164D1AA1A7E244;
+			remoteInfo = LiveActivity;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		909DB8256EA146ED96343BE8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				734EE8D7830540909F464F9E /* LiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		0A392AF53E8041F289780C45 /* View+applyWidgetURL.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "View+applyWidgetURL.swift"; path = "View+applyWidgetURL.swift"; sourceTree = "<group>"; };
+		0BA14E50F96504C80B70F71A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Mino/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Mino.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mino.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Mino/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Mino/Info.plist; sourceTree = "<group>"; };
+		1C2922126D314ED8AE05560A /* LiveActivityWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = LiveActivityWidget.swift; path = LiveActivityWidget.swift; sourceTree = "<group>"; };
+		27857983AED74361B91BACC3 /* Assets.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
+		4AAD8BECB564633FF2D6CCE2 /* Pods-Mino.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mino.debug.xcconfig"; path = "Target Support Files/Pods-Mino/Pods-Mino.debug.xcconfig"; sourceTree = "<group>"; };
+		5E8EDB4AAF9645848A6B56FC /* Date+toTimerInterval.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "Date+toTimerInterval.swift"; path = "Date+toTimerInterval.swift"; sourceTree = "<group>"; };
+		6740C701A2EF44B6B365FDC9 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+		73408A23B25F4E929B23DA41 /* View+applyIfPresent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "View+applyIfPresent.swift"; path = "View+applyIfPresent.swift"; sourceTree = "<group>"; };
+		750957877FB0F655CB9124A1 /* libPods-Mino.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Mino.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		96BC252D6F56488C84442AD6 /* Image+dynamic.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "Image+dynamic.swift"; path = "Image+dynamic.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Mino/SplashScreen.storyboard; sourceTree = "<group>"; };
+		AFD16A1286C24BB8856221AB /* LiveActivity.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LiveActivity.entitlements; path = LiveActivity.entitlements; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C3C73BA5BC5F4F06AAE3226D /* ViewHelpers.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ViewHelpers.swift; path = ViewHelpers.swift; sourceTree = "<group>"; };
+		D99DA047289D4959B06978DA /* LiveActivityView.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = LiveActivityView.swift; path = LiveActivityView.swift; sourceTree = "<group>"; };
+		DE7AAF930D434E19A8B0DD3F /* Color+hex.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "Color+hex.swift"; path = "Color+hex.swift"; sourceTree = "<group>"; };
+		E84A6CDEE13846F60D318F74 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Mino/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		EBB6D6CC6F87F19C11065F4F /* Pods-Mino.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mino.release.xcconfig"; path = "Target Support Files/Pods-Mino/Pods-Mino.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Mino/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Mino-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Mino-Bridging-Header.h"; path = "Mino/Mino-Bridging-Header.h"; sourceTree = "<group>"; };
-		FA8215CBBBBE43B487D01A2A /* LiveActivity.appex */ = {isa = PBXFileReference; name = "LiveActivity.appex"; path = "LiveActivity.appex"; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = undefined; lastKnownFileType = undefined; explicitFileType = wrapper.app-extension; includeInIndex = 0; };
-		DE7AAF930D434E19A8B0DD3F /* Color+hex.swift */ = {isa = PBXFileReference; name = "Color+hex.swift"; path = "Color+hex.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		5E8EDB4AAF9645848A6B56FC /* Date+toTimerInterval.swift */ = {isa = PBXFileReference; name = "Date+toTimerInterval.swift"; path = "Date+toTimerInterval.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		96BC252D6F56488C84442AD6 /* Image+dynamic.swift */ = {isa = PBXFileReference; name = "Image+dynamic.swift"; path = "Image+dynamic.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		D99DA047289D4959B06978DA /* LiveActivityView.swift */ = {isa = PBXFileReference; name = "LiveActivityView.swift"; path = "LiveActivityView.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		1C2922126D314ED8AE05560A /* LiveActivityWidget.swift */ = {isa = PBXFileReference; name = "LiveActivityWidget.swift"; path = "LiveActivityWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		FDBD3B08397D4647A61FCBE9 /* LiveActivityWidgetBundle.swift */ = {isa = PBXFileReference; name = "LiveActivityWidgetBundle.swift"; path = "LiveActivityWidgetBundle.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		73408A23B25F4E929B23DA41 /* View+applyIfPresent.swift */ = {isa = PBXFileReference; name = "View+applyIfPresent.swift"; path = "View+applyIfPresent.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		0A392AF53E8041F289780C45 /* View+applyWidgetURL.swift */ = {isa = PBXFileReference; name = "View+applyWidgetURL.swift"; path = "View+applyWidgetURL.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		C3C73BA5BC5F4F06AAE3226D /* ViewHelpers.swift */ = {isa = PBXFileReference; name = "ViewHelpers.swift"; path = "ViewHelpers.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		27857983AED74361B91BACC3 /* Assets.xcassets */ = {isa = PBXFileReference; name = "Assets.xcassets"; path = "Assets.xcassets"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = folder.assetcatalog; explicitFileType = undefined; includeInIndex = 0; };
-		6740C701A2EF44B6B365FDC9 /* Info.plist */ = {isa = PBXFileReference; name = "Info.plist"; path = "Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
-		AFD16A1286C24BB8856221AB /* LiveActivity.entitlements */ = {isa = PBXFileReference; name = "LiveActivity.entitlements"; path = "LiveActivity.entitlements"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FA8215CBBBBE43B487D01A2A /* LiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = LiveActivity.appex; path = LiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDBD3B08397D4647A61FCBE9 /* LiveActivityWidgetBundle.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = LiveActivityWidgetBundle.swift; path = LiveActivityWidgetBundle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,10 +85,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B7E41FA7A42E4FFCA48606AE /* libPods-Mino.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		437D17F98690424BB56BBC81 /* Embed Foundation Extensions */ = {
+		437D17F98690424BB56BBC81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -68,6 +99,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		114A88129E8DB531AE7DF90D /* Mino */ = {
+			isa = PBXGroup;
+			children = (
+				0BA14E50F96504C80B70F71A /* ExpoModulesProvider.swift */,
+			);
+			name = Mino;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Mino */ = {
 			isa = PBXGroup;
 			children = (
@@ -77,14 +116,24 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
+				E84A6CDEE13846F60D318F74 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Mino;
+			sourceTree = "<group>";
+		};
+		1D844DD36D0BDB3D2DD61799 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				114A88129E8DB531AE7DF90D /* Mino */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				750957877FB0F655CB9124A1 /* libPods-Mino.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -104,6 +153,8 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				EBFEB385483343B3843D7649 /* LiveActivity */,
+				ED9426A99D264D71EA5F0E80 /* Pods */,
+				1D844DD36D0BDB3D2DD61799 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -148,6 +199,16 @@
 			path = LiveActivity;
 			sourceTree = "<group>";
 		};
+		ED9426A99D264D71EA5F0E80 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				4AAD8BECB564633FF2D6CCE2 /* Pods-Mino.debug.xcconfig */,
+				EBB6D6CC6F87F19C11065F4F /* Pods-Mino.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -156,12 +217,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Mino" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
+				11405E2323984E76730CB8A6 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				909DB8256EA146ED96343BE8 /* Embed Foundation Extensions */,
+				6E9FE191A956DB13274569AC /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -175,20 +238,20 @@
 		};
 		C787F26615164D1AA1A7E244 /* LiveActivity */ = {
 			isa = PBXNativeTarget;
-			name = LiveActivity;
-			productName = LiveActivity;
-			productReference = FA8215CBBBBE43B487D01A2A;
-			productType = "com.apple.product-type.app-extension";
-			buildConfigurationList = 5A63BAB725704843BA08E3B9;
+			buildConfigurationList = 5A63BAB725704843BA08E3B9 /* Build configuration list for PBXNativeTarget "LiveActivity" */;
 			buildPhases = (
-				2B6723EFE2AC405EA5521E55 /* Embed Foundation Extensions */,
-				437D17F98690424BB56BBC81 /* Embed Foundation Extensions */,
-				15FDD9A36D70435597CFED72 /* Embed Foundation Extensions */,
+				2B6723EFE2AC405EA5521E55 /* Sources */,
+				437D17F98690424BB56BBC81 /* Frameworks */,
+				15FDD9A36D70435597CFED72 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
+			name = LiveActivity;
+			productName = LiveActivity;
+			productReference = FA8215CBBBBE43B487D01A2A /* LiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -233,10 +296,11 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
+				7FF0EAEDDF8EE6EA92F50918 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		15FDD9A36D70435597CFED72 /* Embed Foundation Extensions */ = {
+		15FDD9A36D70435597CFED72 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -284,6 +348,43 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		11405E2323984E76730CB8A6 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Mino/expo-configure-project.sh\"\n";
+		};
+		6E9FE191A956DB13274569AC /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Mino/Pods-Mino-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Mino/Pods-Mino-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -291,15 +392,33 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Mino/Pods-Mino-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXUpdates/EXUpdates.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/RCTI18nStrings.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXUpdates.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCTI18nStrings.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -314,10 +433,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				973155DB9B6A0295560ED65C /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2B6723EFE2AC405EA5521E55 /* Embed Foundation Extensions */ = {
+		2B6723EFE2AC405EA5521E55 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -335,12 +455,22 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		7AF8A08CCBF34F84BF0D1F1F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C787F26615164D1AA1A7E244 /* LiveActivity */;
+			targetProxy = E290F7685A9747F49D5931F8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4AAD8BECB564633FF2D6CCE2 /* Pods-Mino.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Mino/Mino.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -359,22 +489,24 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mario.mino";
-				PRODUCT_NAME = "Mino";
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mario.mino;
+				PRODUCT_NAME = Mino;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mino/Mino-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				VERSIONING_SYSTEM = "apple-generic";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				CODE_SIGN_ENTITLEMENTS = Mino/Mino.entitlements;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBB6D6CC6F87F19C11065F4F /* Pods-Mino.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Mino/Mino.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Mino/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -388,15 +520,57 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mario.mino";
-				PRODUCT_NAME = "Mino";
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mario.mino;
+				PRODUCT_NAME = Mino;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mino/Mino-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				VERSIONING_SYSTEM = "apple-generic";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				CODE_SIGN_ENTITLEMENTS = Mino/Mino.entitlements;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		2D32BB7F64EB4C84935101E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LiveActivity/LiveActivity.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mario.mino.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		47A6A176D93E43B89B5EE35E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LiveActivity/LiveActivity.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mario.mino.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -450,10 +624,17 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				USE_HERMES = true;
 			};
 			name = Debug;
 		};
@@ -502,52 +683,18 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
-		};
-		47A6A176D93E43B89B5EE35E /* Debug */ = {
-			name = Debug;
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				INFOPLIST_FILE = LiveActivity/Info.plist;
-				CURRENT_PROJECT_VERSION = "1";
-				IPHONEOS_DEPLOYMENT_TARGET = "16.2";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mario.mino.LiveActivity";
-				GENERATE_INFOPLIST_FILE = "YES";
-				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MARKETING_VERSION = "1.0.0";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				CODE_SIGN_ENTITLEMENTS = "LiveActivity/LiveActivity.entitlements";
-				APPLICATION_EXTENSION_API_ONLY = "YES";
-			};
-		};
-		2D32BB7F64EB4C84935101E4 /* Release */ = {
-			name = Release;
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				INFOPLIST_FILE = LiveActivity/Info.plist;
-				CURRENT_PROJECT_VERSION = "1";
-				IPHONEOS_DEPLOYMENT_TARGET = "16.2";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mario.mino.LiveActivity";
-				GENERATE_INFOPLIST_FILE = "YES";
-				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MARKETING_VERSION = "1.0.0";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				CODE_SIGN_ENTITLEMENTS = "LiveActivity/LiveActivity.entitlements";
-				APPLICATION_EXTENSION_API_ONLY = "YES";
-			};
 		};
 /* End XCBuildConfiguration section */
 
@@ -561,15 +708,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Mino" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				83CBBA201A601CBA00E9B192 /* Debug */,
-				83CBBA211A601CBA00E9B192 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		5A63BAB725704843BA08E3B9 /* Build configuration list for PBXNativeTarget "LiveActivity" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -579,39 +717,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-/* End XCConfigurationList section */
-
-/* Begin PBXTargetDependency section */
-		7AF8A08CCBF34F84BF0D1F1F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C787F26615164D1AA1A7E244 /* LiveActivity */;
-			targetProxy = E290F7685A9747F49D5931F8 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXContainerItemProxy section */
-		E290F7685A9747F49D5931F8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C787F26615164D1AA1A7E244;
-			remoteInfo = LiveActivity;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		909DB8256EA146ED96343BE8 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				734EE8D7830540909F464F9E /* LiveActivity.appex in Embed Foundation Extensions */,
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Mino" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
-			name = "Embed Foundation Extensions";
-			dstPath = "";
-			dstSubfolderSpec = 13;
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
-/* End PBXCopyFilesBuildPhase section */
+/* End XCConfigurationList section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

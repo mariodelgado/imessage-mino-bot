@@ -5,7 +5,7 @@
 const MINO_API_URL = "https://mino.ai/v1/automation/run-sse";
 
 export interface MinoResult {
-  status: "success" | "error" | "running";
+  status: "success" | "error" | "running" | "cancelled";
   result?: string;
   error?: string;
   progress?: string[];
@@ -13,18 +13,61 @@ export interface MinoResult {
 
 export type ProgressCallback = (message: string) => void;
 
+// Track active Mino operations per user for cancellation
+const activeOperations = new Map<string, AbortController>();
+
+/**
+ * Cancel any active Mino operation for a user
+ * @returns true if an operation was cancelled
+ */
+export function cancelMinoOperation(userId: string): boolean {
+  const controller = activeOperations.get(userId);
+  if (controller) {
+    console.log(`🛑 Cancelling Mino operation for ${userId}`);
+    controller.abort();
+    activeOperations.delete(userId);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Check if a user has an active Mino operation
+ */
+export function hasActiveOperation(userId: string): boolean {
+  return activeOperations.has(userId);
+}
+
+/**
+ * Get count of active operations (for debugging)
+ */
+export function getActiveOperationCount(): number {
+  return activeOperations.size;
+}
+
 export async function runMinoAutomation(
   apiKey: string,
   url: string,
   goal: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  userId?: string  // Optional userId to track and allow cancellation
 ): Promise<MinoResult> {
   const progress: string[] = [];
   let finalResult = "";
-  let status: "success" | "error" | "running" = "running";
+  let status: "success" | "error" | "running" | "cancelled" = "running";
+
+  // Create abort controller for this operation
+  const abortController = new AbortController();
+
+  // Track this operation if userId provided
+  if (userId) {
+    // Cancel any existing operation for this user first
+    cancelMinoOperation(userId);
+    activeOperations.set(userId, abortController);
+  }
 
   try {
-    console.log(`🌐 Mino: Starting request to ${url}`);
+    console.log(`🌐 Mino: Starting request to ${url}${userId ? ` (user: ${userId})` : ""}`);
 
     const response = await fetch(MINO_API_URL, {
       method: "POST",
@@ -33,6 +76,7 @@ export async function runMinoAutomation(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ url, goal }),
+      signal: abortController.signal,
     });
 
     if (!response.ok) {
@@ -119,7 +163,7 @@ export async function runMinoAutomation(
                 : JSON.stringify(data.result, null, 2);
               console.log(`✅ Mino: Direct result (${finalResult.length} chars)`);
             }
-          } catch (parseErr) {
+          } catch {
             // Non-JSON line, might be progress text
             console.log(`📡 Mino non-JSON: ${rawData.slice(0, 100)}`);
             if (rawData) {
@@ -157,11 +201,26 @@ export async function runMinoAutomation(
       progress,
     };
   } catch (error) {
+    // Check if this was an abort/cancellation
+    if (error instanceof Error && error.name === "AbortError") {
+      console.log(`🛑 Mino operation cancelled${userId ? ` for ${userId}` : ""}`);
+      return {
+        status: "cancelled",
+        error: "Operation cancelled by user",
+        progress,
+      };
+    }
+
     console.error(`❌ Mino exception:`, error);
     return {
       status: "error",
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  } finally {
+    // Always clean up the tracking
+    if (userId) {
+      activeOperations.delete(userId);
+    }
   }
 }
 

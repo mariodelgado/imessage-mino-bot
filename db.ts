@@ -38,6 +38,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
   CREATE INDEX IF NOT EXISTS idx_users_mino_state ON users(mino_state);
+
+  -- Bot state for tracking processed messages
+  CREATE TABLE IF NOT EXISTS bot_state (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export interface User {
@@ -133,7 +140,7 @@ export function getAllUsers(): User[] {
 
 // Set Mino OAuth state for a user (used to link callback to phone)
 export function setMinoState(phone: string, state: string): void {
-  const user = getOrCreateUser(phone);
+  getOrCreateUser(phone); // Ensure user exists
   db.prepare("UPDATE users SET mino_state = ? WHERE phone = ?").run(state, phone);
 }
 
@@ -240,6 +247,32 @@ export function clearMinoAuth(phone: string): void {
       mino_token_expires_at = NULL
     WHERE phone = ?
   `).run(phone);
+}
+
+// ============================================================================
+// BOT STATE (for tracking last processed message, etc.)
+// ============================================================================
+
+export function getBotState(key: string): string | null {
+  const row = db.prepare("SELECT value FROM bot_state WHERE key = ?").get(key) as { value: string } | undefined;
+  return row?.value || null;
+}
+
+export function setBotState(key: string, value: string): void {
+  db.prepare(`
+    INSERT INTO bot_state (key, value, updated_at)
+    VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = CURRENT_TIMESTAMP
+  `).run(key, value, value);
+}
+
+export function getLastProcessedMessageId(): number {
+  const value = getBotState("last_processed_message_id");
+  return value ? parseInt(value, 10) : 0;
+}
+
+export function setLastProcessedMessageId(messageId: number): void {
+  setBotState("last_processed_message_id", messageId.toString());
 }
 
 export { db };

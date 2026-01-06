@@ -34,3 +34,7 @@ export * from './TimeMachineEffects';
 
 // CoverFlow 3D Carousel
 export * from './CoverFlow';
+
+// Snap App Cards - AI-generated interactive content cards
+export * from './SnapAppCard';
+export * from './SnapAppCardPremium';

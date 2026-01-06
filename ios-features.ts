@@ -231,7 +231,7 @@ export function generateShortcutLink(shortcutName: string, input?: string): stri
  */
 export async function createShortcut(
   name: string,
-  actions: string[] // AppleScript-like actions
+  _actions: string[] // AppleScript-like actions
 ): Promise<string> {
   // Shortcuts are complex plist files - for now, provide deep links
   console.log(`⚠️ Shortcut creation requires Shortcuts app - use deep links instead`);

@@ -24,9 +24,10 @@ import ChatScreen from './src/screens/ChatScreen';
 import MinoBrowserScreen from './src/screens/MinoBrowserScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import HomeScreen from './src/screens/HomeScreen';
 import { useNotificationStore } from './src/stores/notificationStore';
 import { ThemeProvider, useTheme } from './src/theme';
-import { ChatIcon, BrowserIcon, SettingsIcon } from './src/components';
+import { ChatIcon, BrowserIcon, SettingsIcon, HomeIcon } from './src/components';
 import { Footnote } from './src/components/Typography';
 import { CinematicProvider } from './src/components/CinematicEffects';
 import { spacing } from './src/theme/tokens';
@@ -35,79 +36,174 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 // ============================================================================
-// CUSTOM TAB BAR WITH LIQUID GLASS
+// MORPHING FLOATING TAB BAR - Premium fluid navigation
 // ============================================================================
+
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  interpolateColor,
+} from 'react-native-reanimated';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function MorphingTabItem({
+  route,
+  label,
+  isFocused,
+  onPress,
+  onLongPress,
+  colors,
+}: {
+  route: any;
+  label: string;
+  isFocused: boolean;
+  onPress: () => void;
+  onLongPress: () => void;
+  colors: any;
+}) {
+  const progress = useSharedValue(isFocused ? 1 : 0);
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    progress.value = withSpring(isFocused ? 1 : 0, {
+      damping: 15,
+      stiffness: 150,
+      mass: 0.8,
+    });
+  }, [isFocused, progress]);
+
+  const containerStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      progress.value,
+      [0, 1],
+      ['transparent', colors.accent.primary + '20']
+    );
+    const paddingHorizontal = interpolate(progress.value, [0, 1], [12, 16]);
+    const borderRadius = interpolate(progress.value, [0, 1], [12, 20]);
+
+    return {
+      backgroundColor,
+      paddingHorizontal,
+      borderRadius,
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const labelStyle = useAnimatedStyle(() => {
+    const width = interpolate(progress.value, [0, 1], [0, 60]);
+    const opacity = interpolate(progress.value, [0, 0.5, 1], [0, 0, 1]);
+    const marginLeft = interpolate(progress.value, [0, 1], [0, 8]);
+
+    return {
+      width,
+      opacity,
+      marginLeft,
+      overflow: 'hidden',
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.92, { damping: 15, stiffness: 400 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+  };
+
+  const renderIcon = () => {
+    switch (route.name) {
+      case 'Home':
+        return <HomeIcon focused={isFocused} size="lg" />;
+      case 'Chat':
+        return <ChatIcon focused={isFocused} size="lg" />;
+      case 'Browser':
+        return <BrowserIcon focused={isFocused} size="lg" />;
+      case 'Settings':
+        return <SettingsIcon focused={isFocused} size="lg" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.morphingTabItem, containerStyle]}
+    >
+      {renderIcon()}
+      <Animated.View style={labelStyle}>
+        <Footnote
+          color={colors.accent.primary}
+          style={styles.morphingTabLabel}
+          numberOfLines={1}
+        >
+          {label}
+        </Footnote>
+      </Animated.View>
+    </AnimatedPressable>
+  );
+}
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const { colors, isDark } = useTheme();
 
   return (
-    <View style={styles.tabBarWrapper}>
-      <BlurView
-        intensity={80}
-        tint={isDark ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[styles.tabBarBorder, { borderTopColor: colors.border.glass }]} />
-      <View style={styles.tabBarContent}>
-        {state.routes.map((route: any, index: number) => {
-          const { options } = descriptors[route.key];
-          const label = options.tabBarLabel ?? options.title ?? route.name;
-          const isFocused = state.index === index;
+    <View style={styles.floatingTabBarContainer}>
+      <View style={[styles.floatingTabBar, { backgroundColor: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)' }]}>
+        <BlurView
+          intensity={60}
+          tint={isDark ? 'dark' : 'light'}
+          style={[StyleSheet.absoluteFill, styles.floatingTabBarBlur]}
+        />
+        <View style={styles.floatingTabBarContent}>
+          {state.routes.map((route: any, index: number) => {
+            const { options } = descriptors[route.key];
+            const label = options.tabBarLabel ?? options.title ?? route.name;
+            const isFocused = state.index === index;
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
 
-            if (!isFocused && !event.defaultPrevented) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              navigation.navigate(route.name);
-            }
-          };
+              if (!isFocused && !event.defaultPrevented) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate(route.name);
+              }
+            };
 
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
+            const onLongPress = () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              navigation.emit({
+                type: 'tabLongPress',
+                target: route.key,
+              });
+            };
 
-          const renderIcon = () => {
-            switch (route.name) {
-              case 'Chat':
-                return <ChatIcon focused={isFocused} size="lg" />;
-              case 'Browser':
-                return <BrowserIcon focused={isFocused} size="lg" />;
-              case 'Settings':
-                return <SettingsIcon focused={isFocused} size="lg" />;
-              default:
-                return null;
-            }
-          };
-
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabItem}
-            >
-              {renderIcon()}
-              <Footnote
-                color={isFocused ? colors.accent.primary : colors.foreground.tertiary}
-                style={styles.tabLabel}
-              >
-                {label}
-              </Footnote>
-            </Pressable>
-          );
-        })}
+            return (
+              <MorphingTabItem
+                key={route.key}
+                route={route}
+                label={label}
+                isFocused={isFocused}
+                onPress={onPress}
+                onLongPress={onLongPress}
+                colors={colors}
+              />
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -134,6 +230,14 @@ function TabNavigator() {
         headerShadowVisible: false,
       }}
     >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'Snap Apps',
+          headerShown: false,
+        }}
+      />
       <Tab.Screen
         name="Chat"
         component={ChatScreen}
@@ -291,33 +395,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  tabBarWrapper: {
+  // Floating tab bar styles
+  floatingTabBarContainer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: Platform.OS === 'ios' ? spacing[8] : spacing[4],
+    left: spacing[4],
+    right: spacing[4],
+    alignItems: 'center',
+  },
+  floatingTabBar: {
+    borderRadius: 28,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  tabBarBorder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 0.5,
-    borderTopWidth: 0.5,
+  floatingTabBarBlur: {
+    borderRadius: 28,
   },
-  tabBarContent: {
+  floatingTabBarContent: {
     flexDirection: 'row',
-    paddingTop: spacing[2],
-    paddingBottom: Platform.OS === 'ios' ? spacing[7] : spacing[3],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[2],
+    gap: spacing[1],
   },
-  tabItem: {
-    flex: 1,
+  morphingTabItem: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing[1],
+    paddingVertical: spacing[2],
   },
-  tabLabel: {
-    marginTop: spacing[1],
+  morphingTabLabel: {
+    fontWeight: '600',
   },
 });
