@@ -1,0 +1,544 @@
+{
+  "sources": [
+    {
+      "id": "iscc",
+      "name": "ISCC (International Sustainability & Carbon Certification)",
+      "url": "https://www.iscc-system.org/certification/iscc-eu/",
+      "type": "certification",
+      "region": "EU"
+    },
+    {
+      "id": "eu-lex-red",
+      "name": "EUR-Lex: Renewable Energy Directive",
+      "url": "https://eur-lex.europa.eu/",
+      "type": "legislation",
+      "region": "EU"
+    },
+    {
+      "id": "eu-lex-biofuels",
+      "name": "EUR-Lex: Biofuels & Transport",
+      "url": "https://eur-lex.europa.eu/",
+      "type": "legislation",
+      "region": "EU"
+    },
+    {
+      "id": "eu-lex-sustainability",
+      "name": "EUR-Lex: Sustainability Criteria",
+      "url": "https://eur-lex.europa.eu/",
+      "type": "legislation",
+      "region": "EU"
+    },
+    {
+      "id": "sweden",
+      "name": "Swedish Energy Agency",
+      "url": "https://www.energimyndigheten.se/",
+      "type": "agency",
+      "region": "Sweden"
+    },
+    {
+      "id": "germany",
+      "name": "BMUV (German Environment Ministry)",
+      "url": "https://www.bmuv.de/",
+      "type": "agency",
+      "region": "Germany"
+    },
+    {
+      "id": "norway",
+      "name": "Norwegian Environment Agency",
+      "url": "https://www.miljodirektoratet.no/",
+      "type": "agency",
+      "region": "Norway"
+    },
+    {
+      "id": "netherlands",
+      "name": "NEa (Dutch Emissions Authority)",
+      "url": "https://www.emissieautoriteit.nl/",
+      "type": "agency",
+      "region": "Netherlands"
+    },
+    {
+      "id": "uk",
+      "name": "UK Department for Transport",
+      "url": "https://www.gov.uk/government/organisations/department-for-transport",
+      "type": "agency",
+      "region": "UK"
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc-c9cfe05a",
+      "source_id": "iscc",
+      "url": "https://www.iscc-system.org/updates/22-december-2025/#1-1-introduction-of-biomarine-fuel-operator-scope",
+      "title": "Introduction of Biomarine Fuel Operator Scope",
+      "summary": "This update introduces a new scope under ISCC EU for Biomarine Fuel Operators (BFO) applying to raw materials like UCO and FAME residues sold into the maritime sector. It enables the issuance of a Proof of Sustainability (PoS) for these materials without further conversion.",
+      "doc_type": "guidance",
+      "content_hash": "2b05dfa8275e8017",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-12-22\"}"
+    },
+    {
+      "id": "doc-4fce12db",
+      "source_id": "iscc",
+      "url": "https://www.iscc-system.org/updates/22-december-2025/#1-2-iscc-eu-recognition-for-netherlands-sde",
+      "title": "ISCC EU Recognition for Netherlands SDE++",
+      "summary": "Starting January 1, 2026, economic operators can demonstrate compliance with the Dutch SDE++ biomass scheme via ISCC EU certification. The ISCC Solid Biomass NL scheme is now fully embedded within ISCC EU for energy applications.",
+      "doc_type": "guidance",
+      "content_hash": "936952ecf4ccc838",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-12-22\"}"
+    },
+    {
+      "id": "doc-4bd5946e",
+      "source_id": "iscc",
+      "url": "https://www.iscc-system.org/updates/22-december-2025/#1-3-publication-of-the-iscc-eu-guidance-document-203-02-mass-balance",
+      "title": "Publication of the ISCC EU Guidance Document 203-02 “Mass Balance”",
+      "summary": "The final version (v1.2) of the ISCC EU Guidance Document on Mass Balance has been published, providing clarifications for rules under the Renewable Energy Directive (EU) 2018/2001 and (EU) 2023/2413. It covers the entire supply chain from feedstocks to final fuel production.",
+      "doc_type": "guidance",
+      "content_hash": "80e30a54751d1f14",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-12-22\"}"
+    },
+    {
+      "id": "doc-aaaff193",
+      "source_id": "iscc",
+      "url": "https://www.iscc-system.org/updates/22-december-2025/#3-clarification-on-the-certification-of-end-of-life-tyres-under-iscc-eu-and-iscc-plus",
+      "title": "Clarification on the Certification of End-of-life Tyres",
+      "summary": "Clarifies certification for tyre chips and granules under ISCC EU (biogenic fraction) and ISCC PLUS (all fractions). It defines the applicable scopes such as Shredding Unit or Mechanical Recycling Plant.",
+      "doc_type": "guidance",
+      "content_hash": "5d70c2ea0d1a7d9a",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-12-22\"}"
+    },
+    {
+      "id": "doc-359f83bb",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=8f7dae8941&e=ff48fbaf61",
+      "title": "ISCC Sustainability Declarations - Traceability for CO2 Inputs",
+      "summary": "Provides clarification on traceability requirements for CO2 inputs for RED-certified Points of Origin and ISCC EU-certified entities. This is crucial for verifying the sustainability of fuels involving carbon capture.",
+      "doc_type": "guidance",
+      "content_hash": "5c90d80a7dbd1b7e",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-11-25\"}"
+    },
+    {
+      "id": "doc-465587e7",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=b786ffc2d7&e=ff48fbaf61",
+      "title": "ISCC EU System Document 205 “Greenhouse Gas Emissions”",
+      "summary": "Outlines specific requirements for calculating transport emissions (e_td) for gaseous fuels, focusing on sourcing the transport efficiency factor. Essential for GHG compliance in biomethane and biogas supply chains.",
+      "doc_type": "guidance",
+      "content_hash": "1c2c54bbaae7d613",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-11-25\"}"
+    },
+    {
+      "id": "doc-1299baef",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=1a558b0228&e=ff48fbaf61",
+      "title": "ISCC EU System Document 201 “System Basics” (v4.2)",
+      "summary": "Defines criteria for the certification of intermediate crops under ISCC EU. Note that this is currently on hold due to misalignment with RED III requirements.",
+      "doc_type": "guidance",
+      "content_hash": "8af9bb49fb10ad92",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-11-25\"}"
+    },
+    {
+      "id": "doc-f29180dd",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=2305ecbd9b&e=5642a1598e",
+      "title": "ISCC Proof of Compliance (PoC) Guidance Document",
+      "summary": "Revised guidance document detailing criteria for issuing Proof of Compliance (PoC) and data requirements for documentation. It supports the transition to updated biofuel templates including RED III requirements.",
+      "doc_type": "guidance",
+      "content_hash": "89c79a808ad25f15",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-09-22\"}"
+    },
+    {
+      "id": "doc-978e005d",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=9bb2d36542&e=5642a1598e",
+      "title": "ICAO CORSIA Document: Default Life Cycle Emissions Values for CORSIA Eligible Fuels",
+      "summary": "A revised ICAO CORSIA document providing updated default life cycle emission values and ILUC values for CORSIA eligible fuels, including SAF. It includes correction factors for hydrogen and heat production pathways.",
+      "doc_type": "report",
+      "content_hash": "7e7be966b7593671",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-09-22\"}"
+    },
+    {
+      "id": "doc-17db45ba",
+      "source_id": "iscc",
+      "url": "https://iscc-system.us13.list-manage.com/track/click?u=dcd119a2c146dc9a373190297&id=3b4eb49e01&e=5642a1598e",
+      "title": "ICAO CORSIA Methodology for Calculating Actual Life Cycle Emissions Values",
+      "summary": "This document outlines the methodology for calculating actual GHG values for SAF and other CORSIA eligible fuels, allowing producers to demonstrate better-than-default performance.",
+      "doc_type": "guidance",
+      "content_hash": "5e7213994ae3129c",
+      "first_seen_at": "2026-01-07 19:30:20",
+      "last_seen_at": "2026-01-07 19:30:20",
+      "last_changed_at": null,
+      "status": "active",
+      "metadata": "{\"date\":\"2025-09-22\"}"
+    }
+  ],
+  "documentTopics": [
+    {
+      "document_id": "doc-fedfebc4",
+      "topic_id": "certification",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"ISCC\",\"mass balance\"]"
+    },
+    {
+      "document_id": "doc-fedfebc4",
+      "topic_id": "red-iii",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"renewable energy directive\"]"
+    },
+    {
+      "document_id": "doc-fedfebc4",
+      "topic_id": "national",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"implementation\"]"
+    },
+    {
+      "document_id": "doc-c9cfe05a",
+      "topic_id": "maritime",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"marine fuel\"]"
+    },
+    {
+      "document_id": "doc-c9cfe05a",
+      "topic_id": "certification",
+      "relevance_score": 0.2,
+      "matched_keywords": "[\"ISCC\"]"
+    },
+    {
+      "document_id": "doc-c9cfe05a",
+      "topic_id": "feedstock",
+      "relevance_score": 0.16666666666666666,
+      "matched_keywords": "[\"UCO\"]"
+    },
+    {
+      "document_id": "doc-4fce12db",
+      "topic_id": "certification",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"ISCC\",\"certification\"]"
+    },
+    {
+      "document_id": "doc-4bd5946e",
+      "topic_id": "red-iii",
+      "relevance_score": 0.5,
+      "matched_keywords": "[\"renewable energy directive\",\"2023/2413\"]"
+    },
+    {
+      "document_id": "doc-4bd5946e",
+      "topic_id": "certification",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"ISCC\",\"mass balance\"]"
+    },
+    {
+      "document_id": "doc-4bd5946e",
+      "topic_id": "feedstock",
+      "relevance_score": 0.16666666666666666,
+      "matched_keywords": "[\"feedstock\"]"
+    },
+    {
+      "document_id": "doc-aaaff193",
+      "topic_id": "certification",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"ISCC\",\"certification\"]"
+    },
+    {
+      "document_id": "doc-359f83bb",
+      "topic_id": "certification",
+      "relevance_score": 0.2,
+      "matched_keywords": "[\"ISCC\"]"
+    },
+    {
+      "document_id": "doc-465587e7",
+      "topic_id": "ghg",
+      "relevance_score": 0.6,
+      "matched_keywords": "[\"GHG\",\"greenhouse gas\",\"emission\"]"
+    },
+    {
+      "document_id": "doc-465587e7",
+      "topic_id": "certification",
+      "relevance_score": 0.2,
+      "matched_keywords": "[\"ISCC\"]"
+    },
+    {
+      "document_id": "doc-1299baef",
+      "topic_id": "certification",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"ISCC\",\"certification\"]"
+    },
+    {
+      "document_id": "doc-1299baef",
+      "topic_id": "red-iii",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"RED III\"]"
+    },
+    {
+      "document_id": "doc-f29180dd",
+      "topic_id": "red-iii",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"RED III\"]"
+    },
+    {
+      "document_id": "doc-f29180dd",
+      "topic_id": "certification",
+      "relevance_score": 0.2,
+      "matched_keywords": "[\"ISCC\"]"
+    },
+    {
+      "document_id": "doc-978e005d",
+      "topic_id": "saf",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"SAF\"]"
+    },
+    {
+      "document_id": "doc-978e005d",
+      "topic_id": "ghg",
+      "relevance_score": 0.2,
+      "matched_keywords": "[\"emission\"]"
+    },
+    {
+      "document_id": "doc-978e005d",
+      "topic_id": "feedstock",
+      "relevance_score": 0.16666666666666666,
+      "matched_keywords": "[\"ILUC\"]"
+    },
+    {
+      "document_id": "doc-17db45ba",
+      "topic_id": "ghg",
+      "relevance_score": 0.4,
+      "matched_keywords": "[\"GHG\",\"emission\"]"
+    },
+    {
+      "document_id": "doc-17db45ba",
+      "topic_id": "saf",
+      "relevance_score": 0.25,
+      "matched_keywords": "[\"SAF\"]"
+    }
+  ],
+  "scrapeLogs": [
+    {
+      "id": 16,
+      "scraped_at": "2026-01-07 20:00:32",
+      "source_id": "uk",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 299960,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 15,
+      "scraped_at": "2026-01-07 19:55:30",
+      "source_id": "netherlands",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 300003,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 14,
+      "scraped_at": "2026-01-07 19:50:28",
+      "source_id": "norway",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 300003,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 13,
+      "scraped_at": "2026-01-07 19:45:26",
+      "source_id": "germany",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 300002,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 12,
+      "scraped_at": "2026-01-07 19:40:24",
+      "source_id": "sweden",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 300004,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 11,
+      "scraped_at": "2026-01-07 19:35:22",
+      "source_id": "eu-lex-red",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 300005,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 10,
+      "scraped_at": "2026-01-07 19:30:20",
+      "source_id": "iscc",
+      "documents_found": 10,
+      "documents_new": 10,
+      "documents_changed": 0,
+      "documents_removed": 1,
+      "duration_ms": 223842,
+      "status": "success",
+      "error": null
+    },
+    {
+      "id": 9,
+      "scraped_at": "2026-01-07 19:23:40",
+      "source_id": "eu-lex-red",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 299996,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 8,
+      "scraped_at": "2026-01-07 19:18:38",
+      "source_id": "iscc",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 0,
+      "status": "error",
+      "error": "FOREIGN KEY constraint failed"
+    },
+    {
+      "id": 7,
+      "scraped_at": "2026-01-07 19:13:21",
+      "source_id": "uk",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120003,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 6,
+      "scraped_at": "2026-01-07 19:11:19",
+      "source_id": "netherlands",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120003,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 5,
+      "scraped_at": "2026-01-07 19:09:17",
+      "source_id": "norway",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120001,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 4,
+      "scraped_at": "2026-01-07 19:07:15",
+      "source_id": "germany",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120002,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 3,
+      "scraped_at": "2026-01-07 19:05:13",
+      "source_id": "sweden",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120002,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 2,
+      "scraped_at": "2026-01-07 19:03:11",
+      "source_id": "eu-lex-red",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120003,
+      "status": "error",
+      "error": "Timeout"
+    },
+    {
+      "id": 1,
+      "scraped_at": "2026-01-07 19:01:09",
+      "source_id": "iscc",
+      "documents_found": 0,
+      "documents_new": 0,
+      "documents_changed": 0,
+      "documents_removed": 0,
+      "duration_ms": 120005,
+      "status": "error",
+      "error": "Timeout"
+    }
+  ],
+  "exportedAt": "2026-01-07T20:00:34.411Z"
+}
