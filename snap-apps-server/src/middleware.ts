@@ -9,6 +9,9 @@ const AUTH_COOKIE_VALUE = 'authenticated';
 // Paths that don't require authentication
 const PUBLIC_PATHS = [
   '/login',
+  '/api/auth',      // Auth endpoint
+  '/api/cron',      // Cron jobs
+  '/api/snap-apps', // External API access
   '/api/health',
   '/_next',
   '/favicon.ico',
@@ -33,11 +36,6 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-Content-Type-Options', 'nosniff');
     return response;
-  }
-
-  // Check for password in POST request to /login
-  if (pathname === '/api/auth' && request.method === 'POST') {
-    return NextResponse.next();
   }
 
   // Redirect to login page
