@@ -167,11 +167,29 @@ interface MessagePartType {
 interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
+  content?: string;
   parts?: MessagePartType[];
 }
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
+
+  // Handle user messages with content property
+  if (isUser && message.content) {
+    return (
+      <div className="flex justify-end">
+        <div
+          className="max-w-[85%] px-4 py-3 rounded-2xl rounded-br-md"
+          style={{
+            backgroundColor: colors.accent,
+            color: "#FFFFFF",
+          }}
+        >
+          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Check if message has parts (AI SDK v6 format)
   if (message.parts && message.parts.length > 0) {
