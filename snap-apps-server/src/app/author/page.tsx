@@ -1,9 +1,7 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { Sparkles, Send, Loader2, ExternalLink } from "lucide-react";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 
 // Design system colors
 const colors = {
@@ -25,6 +23,13 @@ interface ToolResult {
   };
   message?: string;
   error?: string;
+}
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  toolResult?: ToolResult;
 }
 
 function WelcomeMessage({
@@ -157,112 +162,34 @@ function ToolResultCard({ result }: { result: ToolResult }) {
   return null;
 }
 
-interface MessagePartType {
-  type: string;
-  text?: string;
-  toolName?: string;
-  result?: ToolResult;
-}
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant" | "system";
-  content?: string;
-  parts?: MessagePartType[];
-}
-
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
-  // Handle user messages with content property
-  if (isUser && message.content) {
-    return (
-      <div className="flex justify-end">
+  return (
+    <div className="space-y-2">
+      <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
         <div
-          className="max-w-[85%] px-4 py-3 rounded-2xl rounded-br-md"
+          className={`max-w-[85%] px-4 py-3 rounded-2xl ${
+            isUser ? "rounded-br-md" : "rounded-bl-md"
+          }`}
           style={{
-            backgroundColor: colors.accent,
-            color: "#FFFFFF",
+            backgroundColor: isUser ? colors.accent : "#F3F4F6",
+            color: isUser ? "#FFFFFF" : colors.textPrimary,
           }}
         >
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         </div>
       </div>
-    );
-  }
-
-  // Check if message has parts (AI SDK v6 format)
-  if (message.parts && message.parts.length > 0) {
-    return (
-      <div className="space-y-2">
-        {message.parts.map((part, i) => {
-          if (part.type === "text" && part.text) {
-            return (
-              <div
-                key={i}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] px-4 py-3 rounded-2xl ${
-                    isUser ? "rounded-br-md" : "rounded-bl-md"
-                  }`}
-                  style={{
-                    backgroundColor: isUser ? colors.accent : "#F3F4F6",
-                    color: isUser ? "#FFFFFF" : colors.textPrimary,
-                  }}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{part.text}</p>
-                </div>
-              </div>
-            );
-          }
-
-          if (
-            part.type === "tool-invocation" &&
-            part.toolName === "createSnapApp"
-          ) {
-            if (part.result) {
-              return (
-                <ToolResultCard key={i} result={part.result as ToolResult} />
-              );
-            }
-            return (
-              <div key={i} className="flex items-center gap-2 px-4 py-2">
-                <Loader2
-                  size={14}
-                  className="animate-spin"
-                  style={{ color: colors.accentLight }}
-                />
-                <span
-                  className="text-sm"
-                  style={{ color: colors.textSecondary }}
-                >
-                  Creating Snap App...
-                </span>
-              </div>
-            );
-          }
-
-          return null;
-        })}
-      </div>
-    );
-  }
-
-  return null;
+      {message.toolResult && <ToolResultCard result={message.toolResult} />}
+    </div>
+  );
 }
 
 export default function AuthorPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
-
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/author/chat",
-    }),
-  });
-
-  const isLoading = status === "streaming" || status === "submitted";
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -277,19 +204,107 @@ export default function AuthorPage() {
     setInput(e.target.value);
   };
 
+  const sendMessage = useCallback(async (userMessage: string) => {
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: userMessage,
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/author/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMsg].map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader available");
+
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let toolResult: ToolResult | undefined;
+      const assistantId = crypto.randomUUID();
+
+      // Add empty assistant message that we'll update
+      setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+
+              if (parsed.type === "text-delta" && parsed.delta) {
+                assistantContent += parsed.delta;
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, content: assistantContent }
+                      : m
+                  )
+                );
+              }
+
+              if (parsed.type === "tool-result" && parsed.result) {
+                toolResult = parsed.result;
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, toolResult }
+                      : m
+                  )
+                );
+              }
+            } catch {
+              // Ignore JSON parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Sorry, there was an error processing your request. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [messages]);
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userInput = input;
     setInput("");
-    try {
-      console.log("Sending message:", userInput);
-      await sendMessage({ text: userInput });
-      console.log("Message sent, messages:", messages);
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+    await sendMessage(userInput);
   };
 
   return (
@@ -328,10 +343,7 @@ export default function AuthorPage() {
         ) : (
           <div className="px-4 py-6 space-y-4 max-w-3xl mx-auto">
             {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message as unknown as ChatMessage}
-              />
+              <MessageBubble key={message.id} message={message} />
             ))}
             {isLoading && <LoadingIndicator />}
             <div ref={messagesEndRef} />
