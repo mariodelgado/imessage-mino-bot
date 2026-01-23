@@ -10,6 +10,7 @@ const AUTH_COOKIE_VALUE = 'authenticated';
 const PUBLIC_PATHS = [
   '/login',
   '/author',        // Snap App Author tool
+  '/app',           // Public snap apps
   '/api/auth',      // Auth endpoint
   '/api/author',    // Author API
   '/api/cron',      // Cron jobs
