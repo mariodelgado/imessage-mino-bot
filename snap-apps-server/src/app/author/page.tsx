@@ -283,7 +283,13 @@ export default function AuthorPage() {
 
     const userInput = input;
     setInput("");
-    await sendMessage({ text: userInput });
+    try {
+      console.log("Sending message:", userInput);
+      await sendMessage({ text: userInput });
+      console.log("Message sent, messages:", messages);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
