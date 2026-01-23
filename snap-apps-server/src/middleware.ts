@@ -9,7 +9,9 @@ const AUTH_COOKIE_VALUE = 'authenticated';
 // Paths that don't require authentication
 const PUBLIC_PATHS = [
   '/login',
+  '/author',        // Snap App Author tool
   '/api/auth',      // Auth endpoint
+  '/api/author',    // Author API
   '/api/cron',      // Cron jobs
   '/api/snap-apps', // External API access
   '/api/health',
